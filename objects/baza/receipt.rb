@@ -35,19 +35,13 @@ class Baza::Receipt
   end
 
   def job_id
-    id = @account.pgsql.exec(
-      'SELECT job FROM receipt WHERE id = $1',
-      [@id]
-    )[0]['job']
-    return nil if id.nil?
-    id.to_i
+    id = @account.pgsql.exec('SELECT job FROM receipt WHERE id = $1', [@id])[0]['job']
+    return if id.nil?
+    Integer(id, 10)
   end
 
   def zents
-    @account.pgsql.exec(
-      'SELECT zents FROM receipt WHERE id = $1',
-      [@id]
-    )[0]['zents'].to_i
+    Integer(@account.pgsql.exec('SELECT zents FROM receipt WHERE id = $1', [@id])[0]['zents'], 10)
   end
 
   def summary
@@ -58,10 +52,7 @@ class Baza::Receipt
   end
 
   def created
-    time = @account.pgsql.exec(
-      'SELECT created FROM receipt WHERE id = $1',
-      [@id]
-    )[0]['created']
+    time = @account.pgsql.exec('SELECT created FROM receipt WHERE id = $1', [@id])[0]['created']
     Time.parse(time)
   end
 end

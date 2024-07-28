@@ -42,7 +42,10 @@ class Baza::Token
 
   def human
     @tokens.human.humans.get(
-      @tokens.pgsql.exec('SELECT human FROM token WHERE id = $1', [@id])[0]['human'].to_i
+      Integer(
+        @tokens.pgsql.exec('SELECT human FROM token WHERE id = $1', [@id])[0]['human'],
+        10
+      )
     )
   end
 
@@ -52,31 +55,31 @@ class Baza::Token
 
   def active?
     rows = @tokens.pgsql.exec('SELECT active FROM token WHERE id = $1', [@id])
-    raise Baza::Urror, "Token ##{@id} not found" if rows.empty?
+    raise(Baza::Urror, "Token ##{@id} not found") if rows.empty?
     rows[0]['active'] == 't'
   end
 
   def start(name, uri1, size, errors, agent, meta)
-    raise Baza::Urror, 'The token is inactive' unless active?
-    raise Baza::Urror, 'The balance is negative' unless human.account.balance.positive? || ENV['RACK_ENV'] == 'test'
+    raise(Baza::Urror, 'The token is inactive') unless active?
+    raise(Baza::Urror, 'The balance is negative') unless human.account.balance.positive? || ENV['RACK_ENV'] == 'test'
     @tokens.human.jobs.start(@id, name, uri1, size, errors, agent, meta)
   end
 
   def created
     rows = @tokens.pgsql.exec('SELECT created FROM token WHERE id = $1', [@id])
-    raise Baza::Urror, "Token ##{@id} not found" if rows.empty?
+    raise(Baza::Urror, "Token ##{@id} not found") if rows.empty?
     Time.parse(rows[0]['created'])
   end
 
   def name
     rows = @tokens.pgsql.exec('SELECT name FROM token WHERE id = $1', [@id])
-    raise Baza::Urror, "Token ##{@id} not found" if rows.empty?
+    raise(Baza::Urror, "Token ##{@id} not found") if rows.empty?
     rows[0]['name']
   end
 
   def text
     rows = @tokens.pgsql.exec('SELECT text FROM token WHERE id = $1', [@id])
-    raise Baza::Urror, "Token ##{@id} not found" if rows.empty?
+    raise(Baza::Urror, "Token ##{@id} not found") if rows.empty?
     rows[0]['text']
   end
 

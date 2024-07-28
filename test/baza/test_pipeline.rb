@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'factbase'
+require 'loog'
 # MIT License
 #
 # Copyright (c) 2009-2024 Zerocracy
@@ -23,12 +25,10 @@
 # SOFTWARE.
 
 require 'minitest/autorun'
-require 'loog'
-require 'factbase'
-require_relative '../test__helper'
 require_relative '../../objects/baza'
-require_relative '../../objects/baza/pipeline'
 require_relative '../../objects/baza/factbases'
+require_relative '../../objects/baza/pipeline'
+require_relative '../test__helper'
 
 # Test.
 # Author:: Yegor Bugayenko (yegor256@gmail.com)
@@ -55,10 +55,11 @@ class Baza::PipelineTest < Minitest::Test
       pipeline.start(0.1)
       human = humans.ensure(fake_name)
       token = human.tokens.add(fake_name)
-      uuid = Tempfile.open do |f|
-        File.binwrite(f, Factbase.new.export)
-        uuid = fbs.save(f.path)
-      end
+      uuid =
+        Tempfile.open do |f|
+          File.binwrite(f, Factbase.new.export)
+          uuid = fbs.save(f.path)
+        end
       job = token.start(fake_name, uuid, 1, 0, 'n/a', ['vitals_url:abc'])
       assert(!human.jobs.get(job.id).finished?)
       human.secrets.add(job.name, 'ppp', 'swordfish')

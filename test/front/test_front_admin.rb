@@ -23,8 +23,8 @@
 # SOFTWARE.
 
 require 'minitest/autorun'
-require_relative '../test__helper'
 require_relative '../../baza'
+require_relative '../test__helper'
 
 class Baza::FrontAdminTest < Minitest::Test
   def app
@@ -32,10 +32,7 @@ class Baza::FrontAdminTest < Minitest::Test
   end
 
   def test_renders_admin_pages
-    pages = [
-      '/sql',
-      '/gift'
-    ]
+    pages = ['/sql', '/gift']
     login('yegor256')
     pages.each do |p|
       get(p)

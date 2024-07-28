@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'rake'
+require 'rake/clean'
 # MIT License
 #
 # Copyright (c) 2009-2024 Zerocracy
@@ -23,8 +25,6 @@
 # SOFTWARE.
 
 require 'rubygems'
-require 'rake'
-require 'rake/clean'
 require 'yaml'
 
 ENV['RACK_ENV'] = 'test'

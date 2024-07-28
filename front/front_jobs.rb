@@ -31,23 +31,17 @@ get '/jobs' do
     title: '/jobs',
     jobs: the_human.jobs,
     name: params[:name],
-    offset: (params[:offset] || '0').to_i
+    offset: Integer((params[:offset] || '0'), 10)
   )
 end
 
 get(%r{/jobs/([0-9]+)}) do
-  id = params['captures'].first.to_i
-  assemble(
-    :job,
-    :default,
-    title: "/jobs/#{id}",
-    job: the_human.jobs.get(id),
-    css: 'job'
-  )
+  id = Integer(params['captures'].first, 10)
+  assemble(:job, :default, title: "/jobs/#{id}", job: the_human.jobs.get(id), css: 'job')
 end
 
 get(%r{/jobs/([0-9]+)/expire}) do
-  id = params['captures'].first.to_i
+  id = Integer(params['captures'].first, 10)
   job = the_human.jobs.get(id)
   job.expire!(settings.fbs)
   flash(iri.cut('/jobs').append(id), "The job ##{job.id} expired, all data removed")
@@ -60,10 +54,10 @@ def render_html(uri, name)
     settings.fbs.load(uri, fb)
     Judges::Print.new(settings.loog).run(
       {
-        'title' => name,
-        'format' => 'html',
-        'columns' => 'what,when,who,repository,issue,details',
-        'hide' => '_id,_time,_version,where'
+        title: name,
+        format: 'html',
+        columns: 'what,when,who,repository,issue,details',
+        hide: '_id,_time,_version,where'
       },
       [fb, html]
     )
@@ -73,13 +67,13 @@ def render_html(uri, name)
 end
 
 get(%r{/jobs/([0-9]+)/input.html}) do
-  id = params['captures'].first.to_i
+  id = Integer(params['captures'].first, 10)
   job = the_human.jobs.get(id)
   render_html(job.uri1, job.id)
 end
 
 get(%r{/jobs/([0-9]+)/output.html}) do
-  id = params['captures'].first.to_i
+  id = Integer(params['captures'].first, 10)
   job = the_human.jobs.get(id)
   render_html(job.result.uri2, job.result.id)
 end

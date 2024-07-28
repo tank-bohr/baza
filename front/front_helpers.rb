@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'cgi'
 # MIT License
 #
 # Copyright (c) 2009-2024 Zerocracy
@@ -23,7 +24,6 @@
 # SOFTWARE.
 
 require 'tago'
-require 'cgi'
 
 helpers do
   def succeed(txt)
@@ -36,7 +36,7 @@ helpers do
     if meta.nil?
       ''
     else
-      yield meta.split("#{name}:", 2)[1]
+      yield(meta.split("#{name}:", 2)[1])
     end
   end
 
@@ -57,7 +57,7 @@ helpers do
   end
 
   def usd(num, digits: 4)
-    format("%+.#{digits}f", num.to_f / (1000 * 100))
+    format("%+.#{digits}f", Float(num) / (1000 * 100))
   end
 
   def zents(num, digits: 4)
@@ -100,14 +100,12 @@ helpers do
   end
 
   def footer_status(title)
-    always = settings.send(title)
+    always = settings.public_send(title)
     s = always.to_s
-    a, b, c = s.split('/').map(&:to_i)
+    a, b, c = s.split('/').map { |i| Integer(i, 10) }
     return "#{title}:#{s[0..40].inspect}" if c.nil?
     if c.positive?
-      c =
-        "<a href='#{iri.cut('/footer/status').add(badge: title)}'>" \
-        "<span style='color:firebrick;'>#{c}</span></a>"
+      c = "<a href='#{iri.cut('/footer/status').add(badge: title)}'><span style='color:firebrick;'>#{c}</span></a>"
     end
     "#{title}:#{a}/#{b}/#{c}"
   end

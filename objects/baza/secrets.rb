@@ -38,10 +38,7 @@ class Baza::Secrets
   end
 
   def empty?
-    pgsql.exec(
-      'SELECT id FROM secret WHERE human = $1',
-      [@human.id]
-    ).empty?
+    pgsql.exec('SELECT id FROM secret WHERE human = $1', [@human.id]).empty?
   end
 
   def each
@@ -58,14 +55,14 @@ class Baza::Secrets
     )
     rows.each do |row|
       s = {
-        id: row['id'].to_i,
+        id: Integer(row['id'], 10),
         name: row['name'],
         key: row['key'],
         value: row['value'],
         created: Time.parse(row['created']),
-        jobs: row['jobs'].to_i
+        jobs: Integer(row['jobs'], 10)
       }
-      yield s
+      yield(s)
     end
   end
 
@@ -77,13 +74,13 @@ class Baza::Secrets
   end
 
   def add(name, key, value)
-    raise Baza::Urror, 'The name cannot be empty' if name.empty?
-    raise Baza::Urror, 'The name is not valid' unless name.match?(/^[a-z0-9]+$/)
-    raise Baza::Urror, 'The key cannot be empty' if key.empty?
-    raise Baza::Urror, 'The key is not valid' unless key.match?(/^[a-zA-Z0-9_]+$/)
-    raise Baza::Urror, 'The value cannot be empty' if value.empty?
-    raise Baza::Urror, 'The value is not ASCII' unless value.ascii_only?
-    raise Baza::Urror, 'A secret with these name+key already exists' if exists?(name, key)
+    raise(Baza::Urror, 'The name cannot be empty') if name.empty?
+    raise(Baza::Urror, 'The name is not valid') unless name.match?(/^[a-z0-9]+$/)
+    raise(Baza::Urror, 'The key cannot be empty') if key.empty?
+    raise(Baza::Urror, 'The key is not valid') unless key.match?(/^[a-zA-Z0-9_]+$/)
+    raise(Baza::Urror, 'The value cannot be empty') if value.empty?
+    raise(Baza::Urror, 'The value is not ASCII') unless value.ascii_only?
+    raise(Baza::Urror, 'A secret with these name+key already exists') if exists?(name, key)
     pgsql.exec(
       'INSERT INTO secret (human, name, key, value) VALUES ($1, $2, $3, $4)',
       [@human.id, name.downcase, key, value]
@@ -91,9 +88,6 @@ class Baza::Secrets
   end
 
   def remove(id)
-    pgsql.exec(
-      'DELETE FROM secret WHERE id = $1 AND human = $2',
-      [id, @human.id]
-    )
+    pgsql.exec('DELETE FROM secret WHERE id = $1 AND human = $2', [id, @human.id])
   end
 end

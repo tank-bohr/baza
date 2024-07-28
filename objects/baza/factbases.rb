@@ -1,5 +1,10 @@
 # frozen_string_literal: true
 
+require 'aws-sdk-core'
+require 'aws-sdk-s3'
+require 'fileutils'
+require 'loog'
+require 'retries'
 # MIT License
 #
 # Copyright (c) 2009-2024 Zerocracy
@@ -23,12 +28,7 @@
 # SOFTWARE.
 
 require 'securerandom'
-require 'fileutils'
 require 'time'
-require 'aws-sdk-s3'
-require 'aws-sdk-core'
-require 'loog'
-require 'retries'
 
 # All factbases.
 # Author:: Yegor Bugayenko (yegor256@gmail.com)
@@ -54,11 +54,7 @@ class Baza::Factbases
       key = oname(uuid)
       File.open(file, 'rb') do |f|
         with_retries do
-          aws.put_object(
-            body: f,
-            bucket: @bucket,
-            key:
-          )
+          aws.put_object(body: f, bucket: @bucket, key:)
         end
       end
       @loog.info("Saved to S3: #{key} (#{File.size(file)} bytes)")
@@ -69,8 +65,8 @@ class Baza::Factbases
   # Read the BLOB from the cloud, identified by the +uuid+, and save it
   # to the file provided. Fail if there is not such BLOB.
   def load(uuid, file)
-    raise 'UUID can\'t be nil' if uuid.nil?
-    raise 'UUID can\'t be empty' if uuid.empty?
+    raise('UUID can\'t be nil') if uuid.nil?
+    raise('UUID can\'t be empty') if uuid.empty?
     if @key.empty?
       FileUtils.mkdir_p(File.dirname(file))
       File.binwrite(file, File.binread(fake(uuid)))
@@ -78,11 +74,7 @@ class Baza::Factbases
     else
       key = oname(uuid)
       with_retries do
-        aws.get_object(
-          response_target: file,
-          bucket: @bucket,
-          key:
-        )
+        aws.get_object(response_target: file, bucket: @bucket, key:)
       end
       @loog.info("Loaded from S3: #{key} (#{File.size(file)} bytes)")
     end
@@ -90,17 +82,14 @@ class Baza::Factbases
 
   # Delete the BLOB from the cloud.
   def delete(uuid)
-    raise 'UUID can\'t be nil' if uuid.nil?
-    raise 'UUID can\'t be empty' if uuid.empty?
+    raise('UUID can\'t be nil') if uuid.nil?
+    raise('UUID can\'t be empty') if uuid.empty?
     if @key.empty?
       FileUtils.rm_f(fake(uuid))
     else
       key = oname(uuid)
       with_retries do
-        aws.delete_object(
-          bucket: @bucket,
-          key:
-        )
+        aws.delete_object(bucket: @bucket, key:)
       end
       @loog.info("Deleted in S3: #{key}")
     end
@@ -109,10 +98,7 @@ class Baza::Factbases
   private
 
   def aws
-    Aws::S3::Client.new(
-      region: @region,
-      credentials: Aws::Credentials.new(@key, @secret)
-    )
+    Aws::S3::Client.new(region: @region, credentials: Aws::Credentials.new(@key, @secret))
   end
 
   def fake(uuid)

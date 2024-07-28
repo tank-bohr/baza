@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'base64'
+require 'factbase'
 # MIT License
 #
 # Copyright (c) 2009-2024 Zerocracy
@@ -23,12 +25,10 @@
 # SOFTWARE.
 
 require 'minitest/autorun'
-require 'factbase'
-require 'base64'
 require 'zlib'
-require_relative '../test__helper'
-require_relative '../../objects/baza'
 require_relative '../../baza'
+require_relative '../../objects/baza'
+require_relative '../test__helper'
 
 class Baza::FrontPushTest < Minitest::Test
   def app
@@ -42,24 +42,19 @@ class Baza::FrontPushTest < Minitest::Test
     login(uname)
     get('/tokens')
     post('/tokens/add', 'name=foo')
-    id = last_response.headers['X-Zerocracy-TokenId'].to_i
+    id = Integer(last_response.headers['X-Zerocracy-TokenId'], 10)
     get("/tokens/#{id}.json")
     token = JSON.parse(last_response.body)['text']
     get('/push')
     header('User-Agent', 'something')
-    post('/push', 'name' => fake_name, 'token' => token)
+    post('/push', name: fake_name, token:)
     assert_status(302)
     fb = Factbase.new
     fb.insert.foo = 'booom \x01\x02\x03'
     assert_status(302)
     Tempfile.open do |f|
       File.binwrite(f.path, fb.export)
-      post(
-        '/push',
-        'name' => fake_name,
-        'token' => token,
-        'factbase' => Rack::Test::UploadedFile.new(f.path, 'application/zip')
-      )
+      post('/push', name: fake_name, token:, factbase: Rack::Test::UploadedFile.new(f.path, 'application/zip'))
     end
     assert_status(302)
   end
@@ -71,22 +66,17 @@ class Baza::FrontPushTest < Minitest::Test
     login(uname)
     get('/tokens')
     post('/tokens/add', 'name=foo')
-    id = last_response.headers['X-Zerocracy-TokenId'].to_i
+    id = Integer(last_response.headers['X-Zerocracy-TokenId'], 10)
     get("/tokens/#{id}.json")
     token = JSON.parse(last_response.body)['text']
     get('/push')
-    post('/push', 'name' => fake_name, 'token' => token)
+    post('/push', name: fake_name, token:)
     assert_status(303)
     fb = Factbase.new
     fb.insert.foo = 'a' * (11 * 1024 * 1024)
     Tempfile.open do |f|
       File.binwrite(f.path, fb.export)
-      post(
-        '/push',
-        'name' => fake_name,
-        'token' => token,
-        'factbase' => Rack::Test::UploadedFile.new(f.path, 'application/zip')
-      )
+      post('/push', name: fake_name, token:, factbase: Rack::Test::UploadedFile.new(f.path, 'application/zip'))
     end
     assert_status(303)
   end
@@ -98,7 +88,7 @@ class Baza::FrontPushTest < Minitest::Test
     login(uname)
     get('/tokens')
     post('/tokens/add', 'name=foo')
-    id = last_response.headers['X-Zerocracy-TokenId'].to_i
+    id = Integer(last_response.headers['X-Zerocracy-TokenId'], 10)
     get("/tokens/#{id}.json")
     token = JSON.parse(last_response.body)['text']
     get('/push')
@@ -108,15 +98,10 @@ class Baza::FrontPushTest < Minitest::Test
     fb.insert.foo = 'booom \x01\x02\x03'
     Tempfile.open do |f|
       Zlib::GzipWriter.open(f.path) do |gz|
-        gz.write fb.export
+        gz.write(fb.export)
       end
       header('Content-Encoding', 'gzip')
-      post(
-        '/push',
-        'name' => fake_name,
-        'token' => token,
-        'factbase' => Rack::Test::UploadedFile.new(f.path, 'application/gzip')
-      )
+      post('/push', name: fake_name, token:, factbase: Rack::Test::UploadedFile.new(f.path, 'application/gzip'))
     end
     assert_status(302)
   end
@@ -148,7 +133,7 @@ class Baza::FrontPushTest < Minitest::Test
     name = fake_name
     put("/push/#{name}", fb.export)
     assert_status(200)
-    id = last_response.body.to_i
+    id = Integer(last_response.body, 10)
     assert(id.positive?)
     get('/jobs')
     assert_status(200)
@@ -158,13 +143,13 @@ class Baza::FrontPushTest < Minitest::Test
     assert_status(200)
     get("/recent/#{name}.txt")
     assert_status(200)
-    rid = last_response.body.to_i
+    rid = Integer(last_response.body, 10)
     cycles = 0
     loop do
       get("/finished/#{rid}")
       assert_status(200)
       break if last_response.body == 'yes'
-      sleep 0.1
+      sleep(0.1)
       cycles += 1
       break if cycles > 20
     end
@@ -177,7 +162,7 @@ class Baza::FrontPushTest < Minitest::Test
     assert_status(200)
     fb.query('(always)').delete!
     fb.import(last_response.body)
-    assert(fb.query('(exists foo)').each.to_a[0].foo.start_with?('booom'))
+    assert(fb.query('(exists foo)').each.to_a.first.foo.start_with?('booom'))
     get("/jobs/#{id}/output.html")
     assert_status(200)
     get("/jobs/#{rid}/expire")
@@ -208,7 +193,7 @@ class Baza::FrontPushTest < Minitest::Test
     login(uname)
     get('/tokens')
     post('/tokens/add', 'name=foo')
-    id = last_response.headers['X-Zerocracy-TokenId'].to_i
+    id = Integer(last_response.headers['X-Zerocracy-TokenId'], 10)
     get("/tokens/#{id}.json")
     JSON.parse(last_response.body)['text']
   end

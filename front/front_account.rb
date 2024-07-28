@@ -29,6 +29,6 @@ get '/account' do
     css: 'account',
     title: '/account',
     account: the_human.account,
-    offset: (params[:offset] || '0').to_i
+    offset: Integer((params[:offset] || '0'), 10)
   )
 end

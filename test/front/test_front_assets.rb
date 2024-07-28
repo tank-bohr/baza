@@ -23,9 +23,9 @@
 # SOFTWARE.
 
 require 'minitest/autorun'
-require_relative '../test__helper'
-require_relative '../../objects/baza'
 require_relative '../../baza'
+require_relative '../../objects/baza'
+require_relative '../test__helper'
 
 class Baza::FrontPushTest < Minitest::Test
   def app

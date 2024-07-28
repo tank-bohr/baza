@@ -35,14 +35,14 @@ class Baza::PushJobsTest < Minitest::Test
     tokens = human.tokens
     token_name = fake_name
     token = tokens.add(token_name)
-    visit '/push'
-    fill_in 'token', with: token.text
+    visit('/push')
+    fill_in('token', with: token.text)
     job_name = fake_name
-    fill_in 'name', with: job_name
-    click_button 'Start'
-    assert human.jobs.name_exists?(job_name)
-    assert human.jobs.busy?(job_name)
-    assert_current_path '/jobs'
+    fill_in('name', with: job_name)
+    click_button('Start')
+    assert(human.jobs.name_exists?(job_name))
+    assert(human.jobs.busy?(job_name))
+    assert_current_path('/jobs')
   end
 
   def test_runs_job_with_factbase
@@ -51,20 +51,20 @@ class Baza::PushJobsTest < Minitest::Test
     tokens = human.tokens
     token_name = fake_name
     token = tokens.add(token_name)
-    visit '/push'
+    visit('/push')
     fb = Factbase.new
     fb.insert.foo = 'booom \x01\x02\x03'
     Tempfile.open do |f|
       File.binwrite(f.path, fb.export)
-      fill_in 'token', with: token.text
+      fill_in('token', with: token.text)
       job_name = fake_name
-      fill_in 'name', with: job_name
+      fill_in('name', with: job_name)
       file = Rack::Test::UploadedFile.new(f.path, 'application/zip')
       attach_file('factbase', file.path)
-      click_button 'Start'
-      assert human.jobs.name_exists?(job_name)
-      assert human.jobs.busy?(job_name)
-      assert_current_path '/jobs'
+      click_button('Start')
+      assert(human.jobs.name_exists?(job_name))
+      assert(human.jobs.busy?(job_name))
+      assert_current_path('/jobs')
     end
   end
 
@@ -74,44 +74,44 @@ class Baza::PushJobsTest < Minitest::Test
     tokens = human.tokens
     token_name = fake_name
     token = tokens.add(token_name)
-    visit '/push'
+    visit('/push')
     Tempfile.open(['tempfile', '.txt']) do |f|
       File.binwrite(f.path, 'Plain text')
-      fill_in 'token', with: token.text
+      fill_in('token', with: token.text)
       job_name = fake_name
-      fill_in 'name', with: job_name
+      fill_in('name', with: job_name)
       file = Rack::Test::UploadedFile.new(f.path, 'text/plain')
       attach_file('factbase', file.path)
-      click_button 'Start'
-      assert !human.jobs.name_exists?(job_name)
-      assert_current_path '/dash'
+      click_button('Start')
+      assert(!human.jobs.name_exists?(job_name))
+      assert_current_path('/dash')
     end
   end
 
   def test_does_not_run_job_without_token
     start_as_tester
     human = tester_human
-    visit '/push'
-    fill_in 'token', with: ''
+    visit('/push')
+    fill_in('token', with: '')
     job_name = fake_name
-    fill_in 'name', with: job_name
-    click_button 'Start'
-    assert !human.jobs.name_exists?(job_name)
-    assert !human.jobs.busy?(job_name)
-    assert_current_path '/dash'
+    fill_in('name', with: job_name)
+    click_button('Start')
+    assert(!human.jobs.name_exists?(job_name))
+    assert(!human.jobs.busy?(job_name))
+    assert_current_path('/dash')
   end
 
   def test_does_not_run_job_with_non_existent_token
     start_as_tester
     human = tester_human
-    visit '/push'
-    fill_in 'token', with: fake_name
+    visit('/push')
+    fill_in('token', with: fake_name)
     job_name = fake_name
-    fill_in 'name', with: job_name
-    click_button 'Start'
-    assert !human.jobs.name_exists?(job_name)
-    assert !human.jobs.busy?(job_name)
-    assert_current_path '/dash'
+    fill_in('name', with: job_name)
+    click_button('Start')
+    assert(!human.jobs.name_exists?(job_name))
+    assert(!human.jobs.busy?(job_name))
+    assert_current_path('/dash')
   end
 
   def test_does_not_run_job_without_name
@@ -120,11 +120,11 @@ class Baza::PushJobsTest < Minitest::Test
     tokens = human.tokens
     token_name = fake_name
     token = tokens.add(token_name)
-    visit '/push'
-    fill_in 'token', with: token.text
-    fill_in 'name', with: ''
-    click_button 'Start'
-    assert_current_path '/dash'
+    visit('/push')
+    fill_in('token', with: token.text)
+    fill_in('name', with: '')
+    click_button('Start')
+    assert_current_path('/dash')
   end
 
   def test_does_not_run_job_with_invalid_name
@@ -133,11 +133,11 @@ class Baza::PushJobsTest < Minitest::Test
     tokens = human.tokens
     token_name = fake_name
     token = tokens.add(token_name)
-    visit '/push'
-    fill_in 'token', with: token.text
-    fill_in 'name', with: 'test_job'
-    click_button 'Start'
-    assert_current_path '/dash'
+    visit('/push')
+    fill_in('token', with: token.text)
+    fill_in('name', with: 'test_job')
+    click_button('Start')
+    assert_current_path('/dash')
   end
 
   def test_does_not_run_busy_job
@@ -146,19 +146,19 @@ class Baza::PushJobsTest < Minitest::Test
     tokens = human.tokens
     token_name = fake_name
     token = tokens.add(token_name)
-    visit '/push'
-    fill_in 'token', with: token.text
+    visit('/push')
+    fill_in('token', with: token.text)
     job_name = fake_name
-    fill_in 'name', with: job_name
-    click_button 'Start'
-    assert human.jobs.name_exists?(job_name)
-    assert human.jobs.busy?(job_name)
-    assert_current_path '/jobs'
+    fill_in('name', with: job_name)
+    click_button('Start')
+    assert(human.jobs.name_exists?(job_name))
+    assert(human.jobs.busy?(job_name))
+    assert_current_path('/jobs')
 
-    visit '/push'
-    fill_in 'token', with: token.text
-    fill_in 'name', with: job_name
-    click_button 'Start'
-    assert_current_path '/dash'
+    visit('/push')
+    fill_in('token', with: token.text)
+    fill_in('name', with: job_name)
+    click_button('Start')
+    assert_current_path('/dash')
   end
 end

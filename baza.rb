@@ -25,14 +25,14 @@
 $stdout.sync = true
 
 require 'always'
+require 'cgi'
+require 'fileutils'
 require 'glogin'
 require 'glogin/codec'
 require 'haml'
 require 'iri'
-require 'fileutils'
-require 'loog'
 require 'json'
-require 'cgi'
+require 'loog'
 require 'pgtk'
 require 'pgtk/pool'
 require 'sinatra'
@@ -57,7 +57,9 @@ end
 
 # Sinatra configs:
 configure do
+  # rubocop:disable Style/IpAddresses
   set :bind, '0.0.0.0'
+  # rubocop:enable Style/IpAddresses
   set :server_settings, timeout: 25
 end
 
@@ -98,7 +100,8 @@ end
 
 # Logging:
 configure do
-  set :logging, false # to disable default Sinatra logging and use Loog
+  # to disable default Sinatra logging and use Loog
+  set :logging, false
   if ENV['RACK_ENV'] == 'test'
     set :loog, Loog::NULL
   else
@@ -109,15 +112,13 @@ end
 # PostgreSQL:
 configure do
   if File.exist?('target/pgsql-config.yml')
-    set :pgsql, Pgtk::Pool.new(
-      Pgtk::Wire::Yaml.new(File.join(__dir__, 'target/pgsql-config.yml')),
-      log: settings.loog
-    )
+    set :pgsql,
+        Pgtk::Pool.new(
+          Pgtk::Wire::Yaml.new(File.join(__dir__, 'target/pgsql-config.yml')),
+          log: settings.loog
+        )
   else
-    set :pgsql, Pgtk::Pool.new(
-      Pgtk::Wire::Env.new('DATABASE_URL'),
-      log: settings.loog
-    )
+    set :pgsql, Pgtk::Pool.new(Pgtk::Wire::Env.new('DATABASE_URL'), log: settings.loog)
   end
   settings.pgsql.start(4)
 end
@@ -125,14 +126,15 @@ end
 # Telegram client:
 configure do
   require_relative 'objects/baza/tbot'
-  set :tbot, Baza::Tbot::Spy.new(
-    Baza::Tbot.new(
-      settings.pgsql,
-      settings.config['tg']['token'],
-      loog: settings.loog
-    ),
-    settings.config['tg']['admin_chat']
-  )
+  set :tbot,
+      Baza::Tbot::Spy.new(
+        Baza::Tbot.new(
+          settings.pgsql,
+          settings.config['tg']['token'],
+          loog: settings.loog
+        ),
+        settings.config['tg']['admin_chat']
+      )
   settings.tbot.start unless ENV['RACK_ENV'] == 'test'
   set :telegramers, {}
 end
@@ -146,13 +148,14 @@ end
 # Factbases:
 configure do
   require_relative 'objects/baza/factbases'
-  set :fbs, Baza::Factbases.new(
-    settings.config['s3']['key'],
-    settings.config['s3']['secret'],
-    settings.config['s3']['region'],
-    settings.config['s3']['bucket'],
-    loog: settings.loog
-  )
+  set :fbs,
+      Baza::Factbases.new(
+        settings.config['s3']['key'],
+        settings.config['s3']['secret'],
+        settings.config['s3']['region'],
+        settings.config['s3']['bucket'],
+        loog: settings.loog
+      )
 end
 
 # Pipeline:
@@ -186,10 +189,7 @@ configure do
   set :donation_amount, 8 * 100_000
   set :donation_period, 30
   settings.donations.start(60) do
-    settings.humans.donate(
-      amount: settings.donation_amount,
-      days: settings.donation_period
-    )
+    settings.humans.donate(amount: settings.donation_amount, days: settings.donation_period)
   end
 end
 
@@ -207,17 +207,17 @@ get '/dash' do
   assemble(:dash, :default, title: '/dash')
 end
 
-require_relative 'front/front_misc'
-require_relative 'front/front_errors'
-require_relative 'front/front_login'
-require_relative 'front/front_admin'
-require_relative 'front/front_tokens'
-require_relative 'front/front_jobs'
 require_relative 'front/front_account'
-require_relative 'front/front_valves'
-require_relative 'front/front_locks'
-require_relative 'front/front_telegram'
-require_relative 'front/front_secrets'
-require_relative 'front/front_push'
+require_relative 'front/front_admin'
 require_relative 'front/front_assets'
+require_relative 'front/front_errors'
 require_relative 'front/front_helpers'
+require_relative 'front/front_jobs'
+require_relative 'front/front_locks'
+require_relative 'front/front_login'
+require_relative 'front/front_misc'
+require_relative 'front/front_push'
+require_relative 'front/front_secrets'
+require_relative 'front/front_telegram'
+require_relative 'front/front_tokens'
+require_relative 'front/front_valves'

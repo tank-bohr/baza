@@ -48,38 +48,31 @@ class Baza::Account
         "to_char(created, 'YY.WW') AS week",
         'FROM receipt',
         'WHERE human = $1',
-        "AND created > NOW() - INTERVAL '#{days.to_i} DAYS'",
+        "AND created > NOW() - INTERVAL '#{Integer(days, 10)} DAYS'",
         'GROUP BY week',
         'ORDER BY week'
       ],
       [@human.id]
-    ).map { |row| { week: row['week'], debit: row['debit'].to_i, credit: row['credit'].to_i } }
+    ).map { |row| { week: row['week'], debit: Integer(row['debit'], 10), credit: Integer(row['credit'], 10) } }
   end
 
   def each(offset: 0)
-    q =
-      'SELECT * FROM receipt ' \
-      'WHERE human = $1 ' \
-      'ORDER BY created DESC ' \
-      "OFFSET #{offset.to_i}"
+    q = "SELECT * FROM receipt WHERE human = $1 ORDER BY created DESC OFFSET #{Integer(offset, 10)}"
     pgsql.exec(q, [@human.id]).each do |row|
-      yield Veil.new(
-        get(row['id'].to_i),
-        id: row['id'].to_i,
-        job_id: row['job']&.to_i,
-        zents: row['zents'].to_i,
+      yield(Veil.new(
+        get(Integer(row['id'], 10)),
+        id: Integer(row['id'], 10),
+        job_id: Integer(row['job'], 10),
+        zents: Integer(row['zents'], 10),
         summary: row['summary'],
         created: Time.parse(row['created'])
-      )
+      ))
     end
   end
 
   # Get total current balance of the human.
   def balance
-    pgsql.exec(
-      'SELECT SUM(zents) FROM receipt WHERE human = $1',
-      [@human.id]
-    )[0]['sum'].to_i
+    Integer(pgsql.exec('SELECT SUM(zents) FROM receipt WHERE human = $1', [@human.id])[0]['sum'], 10)
   end
 
   # Add a new receipt for a human, not attached to a job.
@@ -92,17 +85,14 @@ class Baza::Account
       'INSERT INTO receipt (human, zents, summary, created) VALUES ($1, $2, $3, $4) RETURNING id',
       [@human.id, amount, summary, created]
     )[0]['id']
-    @human.notify(
-      "🍏 We topped up your account by #{amount.zents}.",
-      "Now, the balance is #{balance.zents}."
-    )
+    @human.notify("🍏 We topped up your account by #{amount.zents}.", "Now, the balance is #{balance.zents}.")
     id
   end
 
   # Get a single receipt by ID.
   def get(id)
-    raise 'Receipt ID must be an integer' unless id.is_a?(Integer)
-    require_relative 'receipt'
+    raise('Receipt ID must be an integer') unless id.is_a?(Integer)
+    require_relative('receipt')
     Baza::Receipt.new(self, id)
   end
 end

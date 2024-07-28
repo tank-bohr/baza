@@ -25,7 +25,7 @@
 require_relative '../objects/baza/urror'
 
 def admin_only
-  raise Baza::Urror, 'You are not allowed to see this' unless the_human.admin?
+  raise(Baza::Urror, 'You are not allowed to see this') unless the_human.admin?
 end
 
 get '/force-login' do
@@ -33,9 +33,9 @@ get '/force-login' do
   login = params[:u]
   cookies[:auth] = GLogin::Cookie::Open.new(
     {
-      'id' => settings.humans.ensure(login).id.to_s,
-      'login' => login,
-      'avatar_url' => 'none'
+      id: settings.humans.ensure(login).id.to_s,
+      login:,
+      avatar_url: 'none'
     },
     settings.config['github']['encryption_secret']
   ).to_s
@@ -47,23 +47,12 @@ get '/sql' do
   query = params[:query] || 'SELECT * FROM human LIMIT 5'
   start = Time.now
   result = settings.pgsql.exec(query)
-  assemble(
-    :sql,
-    :default,
-    title: '/sql',
-    query:,
-    result:,
-    lag: Time.now - start
-  )
+  assemble(:sql, :default, title: '/sql', query:, result:, lag: Time.now - start)
 end
 
 get '/gift' do
   admin_only
-  assemble(
-    :gift,
-    :default,
-    title: '/gift'
-  )
+  assemble(:gift, :default, title: '/gift')
 end
 
 post '/gift' do
@@ -71,7 +60,7 @@ post '/gift' do
   login = params[:human]
   raise Baza::Urror, 'The "human" form part is missing' if login.nil?
   human = settings.humans.ensure(login)
-  zents = params[:zents].to_i
+  zents = Integer(params[:zents], 10)
   raise Baza::Urror, 'The amount can\'t be zero' if zents.nil?
   summary = params[:summary]
   human.account.top_up(zents, summary)
@@ -82,5 +71,6 @@ get '/footer/status' do
   admin_only
   b = params[:badge]
   content_type 'text/plain'
-  settings.send(b).backtraces.map { |bt| Backtrace.new(bt).to_s }.join("\n\n")
+  settings.public_send(b).backtraces.map { |bt| Backtrace.new(bt).to_s }
+.join("\n\n")
 end

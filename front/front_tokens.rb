@@ -25,17 +25,11 @@
 require 'sinatra/json'
 
 get '/tokens' do
-  assemble(
-    :tokens,
-    :default,
-    title: '/tokens',
-    tokens: the_human.tokens,
-    offset: (params[:offset] || '0').to_i
-  )
+  assemble(:tokens, :default, title: '/tokens', tokens: the_human.tokens, offset: Integer((params[:offset] || '0'), 10))
 end
 
 get(%r{/tokens/([0-9]+).json}, provides: ['json']) do
-  json(the_human.tokens.get(params['captures'].first.to_i).to_json)
+  json(the_human.tokens.get(Integer(params['captures'].first, 10)).to_json)
 end
 
 post '/tokens/add' do
@@ -47,7 +41,7 @@ post '/tokens/add' do
 end
 
 get(%r{/tokens/([0-9]+)/deactivate}) do
-  id = params['captures'].first.to_i
+  id = Integer(params['captures'].first, 10)
   token = the_human.tokens.get(id)
   token.deactivate!
   flash(iri.cut('/tokens'), "Token ##{id} deactivated")

@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative 'tbot'
 # MIT License
 #
 # Copyright (c) 2009-2024 Zerocracy
@@ -23,7 +24,6 @@
 # SOFTWARE.
 
 require_relative 'urror'
-require_relative 'tbot'
 
 # Human being.
 # Author:: Yegor Bugayenko (yegor256@gmail.com)
@@ -34,7 +34,7 @@ class Baza::Human
 
   def initialize(humans, id, tbot: Baza::Tbot::Fake.new)
     @humans = humans
-    raise 'Human ID must be an integer' unless id.is_a?(Integer)
+    raise('Human ID must be an integer') unless id.is_a?(Integer)
     @id = id
     @tbot = tbot
   end
@@ -50,53 +50,47 @@ class Baza::Human
   end
 
   def tokens
-    require_relative 'tokens'
+    require_relative('tokens')
     Baza::Tokens.new(self)
   end
 
   def jobs
-    require_relative 'jobs'
+    require_relative('jobs')
     Baza::Jobs.new(self)
   end
 
   def locks
-    require_relative 'locks'
+    require_relative('locks')
     Baza::Locks.new(self)
   end
 
   def secrets
-    require_relative 'secrets'
+    require_relative('secrets')
     Baza::Secrets.new(self)
   end
 
   def valves
-    require_relative 'valves'
+    require_relative('valves')
     Baza::Valves.new(self, tbot: @tbot)
   end
 
   def results
-    require_relative 'results'
+    require_relative('results')
     Baza::Results.new(self)
   end
 
   def account
-    require_relative 'account'
+    require_relative('account')
     Baza::Account.new(self)
   end
 
   def telegram?
-    !@humans.pgsql.exec(
-      'SELECT id FROM telechat WHERE human = $1',
-      [@id]
-    ).empty?
+    !@humans.pgsql.exec('SELECT id FROM telechat WHERE human = $1', [@id]).empty?
   end
 
   def github
-    rows = @humans.pgsql.exec(
-      'SELECT github FROM human WHERE id = $1',
-      [@id]
-    )
-    raise Baza::Urror, "Human ##{@id} not found, can't find his GitHub name" if rows.empty?
+    rows = @humans.pgsql.exec('SELECT github FROM human WHERE id = $1', [@id])
+    raise(Baza::Urror, "Human ##{@id} not found, can't find his GitHub name") if rows.empty?
     rows[0]['github']
   end
 

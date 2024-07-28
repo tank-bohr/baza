@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative 'human'
 # MIT License
 #
 # Copyright (c) 2009-2024 Zerocracy
@@ -23,7 +24,6 @@
 # SOFTWARE.
 
 require_relative 'tbot'
-require_relative 'human'
 require_relative 'urror'
 require_relative 'zents'
 
@@ -40,63 +40,51 @@ class Baza::Humans
   end
 
   def gc
-    require_relative 'gc'
+    require_relative('gc')
     Baza::Gc.new(self)
   end
 
   def get(id)
-    raise 'Human ID must be an integer' unless id.is_a?(Integer)
+    raise('Human ID must be an integer') unless id.is_a?(Integer)
     Baza::Human.new(self, id, tbot: @tbot)
   end
 
   def exists?(login)
-    raise 'Human login must be a String' unless login.is_a?(String)
+    raise('Human login must be a String') unless login.is_a?(String)
     !@pgsql.exec('SELECT id FROM human WHERE github = $1', [login.downcase]).empty?
   end
 
   def find(login)
-    raise 'Human login must be a String' unless login.is_a?(String)
-    rows = @pgsql.exec(
-      'SELECT id FROM human WHERE github = $1',
-      [login.downcase]
-    )
-    raise Baza::Urror, "Human @#{login} not found" if rows.empty?
-    get(rows[0]['id'].to_i)
+    raise('Human login must be a String') unless login.is_a?(String)
+    rows = @pgsql.exec('SELECT id FROM human WHERE github = $1', [login.downcase])
+    raise(Baza::Urror, "Human @#{login} not found") if rows.empty?
+    get(Integer(rows[0]['id'], 10))
   end
 
   # Make sure this human exists (create if it doesn't) and return it.
   def ensure(login)
-    raise 'Human login must be a String' unless login.is_a?(String)
-    raise 'GitHub login is nil' if login.nil?
-    raise 'GitHub login is empty' if login.empty?
-    raise "GitHub login too long: \"@#{login}\"" if login.length > 64
-    rows = @pgsql.exec(
-      'INSERT INTO human (github) VALUES ($1) ON CONFLICT DO NOTHING RETURNING id',
-      [login.downcase]
-    )
+    raise('Human login must be a String') unless login.is_a?(String)
+    raise('GitHub login is nil') if login.nil?
+    raise('GitHub login is empty') if login.empty?
+    raise("GitHub login too long: \"@#{login}\"") if login.length > 64
+    rows = @pgsql.exec('INSERT INTO human (github) VALUES ($1) ON CONFLICT DO NOTHING RETURNING id', [login.downcase])
     return find(login) if rows.empty?
-    get(rows[0]['id'].to_i)
+    get(Integer(rows[0]['id'], 10))
   end
 
   # Find a human by the text of his token and returns the token (not the human).
   def his_token(text)
-    raise "Token (#{text.inspect}) must be a String" unless text.is_a?(String)
-    rows = @pgsql.exec(
-      'SELECT id, human FROM token WHERE text = $1',
-      [text]
-    )
-    raise Baza::Urror, "Token #{text} not found" if rows.empty?
-    row = rows[0]
-    get(row['human'].to_i).tokens.get(row['id'].to_i)
+    raise("Token (#{text.inspect}) must be a String") unless text.is_a?(String)
+    rows = @pgsql.exec('SELECT id, human FROM token WHERE text = $1', [text])
+    raise(Baza::Urror, "Token #{text} not found") if rows.empty?
+    row = rows.first
+    get(Integer(row['human'], 10)).tokens.get(Integer(row['id'], 10))
   end
 
   # Get one job by its ID.
   def job_by_id(id)
-    rows = @pgsql.exec(
-      'SELECT human FROM job JOIN token ON token.id = job.token WHERE job.id = $1',
-      [id]
-    )
-    get(rows[0]['human'].to_i).jobs.get(id)
+    rows = @pgsql.exec('SELECT human FROM job JOIN token ON token.id = job.token WHERE job.id = $1', [id])
+    get(Integer(rows[0]['human'], 10)).jobs.get(id)
   end
 
   # Donate to all accounts that are not funded enough (and eligible for donation).
@@ -105,11 +93,11 @@ class Baza::Humans
     rows = @pgsql.exec(
       [
         'INSERT INTO receipt(human, zents, summary)',
-        "SELECT human, #{amount.to_i} AS zents, $2 AS summary FROM",
+        "SELECT human, #{Integer(amount, 10)} AS zents, $2 AS summary FROM",
         '  (SELECT human.id AS human, SUM(a.zents) AS balance FROM human',
         '  LEFT JOIN receipt AS a ON a.human = human.id',
         '  LEFT JOIN receipt AS b ON b.human = human.id',
-        "    AND b.created > NOW() - INTERVAL '#{days.to_i} DAYS'",
+        "    AND b.created > NOW() - INTERVAL '#{Integer(days, 10)} DAYS'",
         "    AND b.summary LIKE CONCAT('#{summary}', '%')",
         '    AND b.zents > 0',
         '  WHERE b.id IS NULL',
@@ -120,7 +108,7 @@ class Baza::Humans
       [amount, summary]
     )
     rows.each do |row|
-      human = get(row['human'].to_i)
+      human = get(Integer(row['human'], 10))
       human.notify(
         "🍏 We topped up your account by #{amount.zents}.",
         "Now, the balance is #{human.account.balance.zents}.",

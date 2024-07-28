@@ -23,10 +23,10 @@
 # SOFTWARE.
 
 require 'minitest/autorun'
-require_relative '../test__helper'
 require_relative '../../objects/baza'
-require_relative '../../objects/baza/humans'
 require_relative '../../objects/baza/factbases'
+require_relative '../../objects/baza/humans'
+require_relative '../test__helper'
 
 # Test.
 # Author:: Yegor Bugayenko (yegor256@gmail.com)
@@ -45,7 +45,7 @@ class Baza::JobTest < Minitest::Test
     assert(!job.agent.nil?)
     assert(!job.size.nil?)
     assert(!job.errors.nil?)
-    assert_equal('hello, dude!', job.metas[0])
+    assert_equal('hello, dude!', job.metas.first)
     assert_equal('пока!', job.metas[1])
   end
 

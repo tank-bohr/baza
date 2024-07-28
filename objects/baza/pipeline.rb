@@ -23,14 +23,14 @@
 # SOFTWARE.
 
 require 'always'
-require 'loog'
-require 'loog/tee'
 require 'backtrace'
 require 'judges/commands/update'
-require_relative 'tbot'
-require_relative 'humans'
-require_relative 'urror'
+require 'loog'
+require 'loog/tee'
 require_relative 'errors'
+require_relative 'humans'
+require_relative 'tbot'
+require_relative 'urror'
 
 # Pipeline of jobs.
 # Author:: Yegor Bugayenko (yegor256@gmail.com)
@@ -62,11 +62,9 @@ class Baza::Pipeline
       next if job.nil?
       begin
         process_it(job)
-      # rubocop:disable Lint/RescueException
-      rescue Exception => e
-        # rubocop:enable Lint/RescueException
+      rescue StandardError => e
         @humans.pgsql.exec('UPDATE job SET taken = $1 WHERE id = $2', [e.message[0..255], job.id])
-        raise e
+        raise(e)
       end
     end
     @loog.info('Pipeline started')
@@ -97,13 +95,13 @@ class Baza::Pipeline
         uuid,
         escaped(job, stdout.to_s),
         code,
-        ((Time.now - start) * 1000).to_i,
+        Integer(((Time.now - start) * 1000), 10),
         code.zero? ? File.size(input) : nil,
         code.zero? ? Baza::Errors.new(input).count : nil
       )
       if code.zero?
         errs = Baza::Errors.new(input).count
-        unless errs.zero?
+        if errs.nonzero?
           @tbot.notify(
             job.jobs.human,
             "⚠️ The job [##{job.id}](https://www.zerocracy.com/jobs/#{job.id}) (`#{job.name}`)",
@@ -125,33 +123,33 @@ class Baza::Pipeline
   end
 
   def pop
-    require_relative '../../version'
+    require_relative('../../version')
     me = "baza #{Baza::VERSION} #{Time.now.utc.iso8601}"
     rows = @humans.pgsql.exec('UPDATE job SET taken = $1 WHERE taken IS NULL RETURNING id', [me])
-    return nil if rows.empty?
-    @humans.job_by_id(rows[0]['id'].to_i)
+    return if rows.empty?
+    @humans.job_by_id(Integer(rows[0]['id'], 10))
   end
 
   def run(job, input, stdout)
     # rubocop:disable Style/GlobalVars
     $valve = job.valve
     # rubocop:enable Style/GlobalVars
+
     Judges::Update.new(stdout).run(
       {
-        'quiet' => true,
-        'summary' => true,
-        'max-cycles' => 3, # it will stop on the first cycle if no changes are made
-        'log' => false,
-        'verbose' => true,
-        'option' => options(job).map { |k, v| "#{k}=#{v}" },
-        'lib' => File.join(@jdir, 'lib')
+        quiet: true,
+        summary: true,
+        # it will stop on the first cycle if no changes are made
+        'max-cycles': 3,
+        log: false,
+        verbose: true,
+        option: options(job).map { |k, v| "#{k}=#{v}" },
+        lib: File.join(@jdir, 'lib')
       },
       [File.join(@jdir, 'judges'), input]
     )
     0
-  # rubocop:disable Lint/RescueException
-  rescue Exception => e
-    # rubocop:enable Lint/RescueException
+  rescue StandardError => e
     stdout.error(Backtrace.new(e))
     1
   end
@@ -160,11 +158,12 @@ class Baza::Pipeline
   # @param [Baza::Job] job The job
   # @return [Hash] Option/value pairs
   def options(job)
-    metas = job.metas.to_h do |m|
-      a = m.split(':', 2)
-      a[1] = '' if a.size == 1
-      a
-    end
+    metas =
+      job.metas.to_h do |m|
+        a = m.split(':', 2)
+        a[1] = '' if a.size == 1
+        a
+      end
     job.secrets
       .to_h { |s| [s['key'], s['value']] }
       .merge(metas)

@@ -31,23 +31,23 @@ class Baza::QueriesConsoleTest < Minitest::Test
 
   def test_checks_that_query_field_is_filled_by_default
     start_as_tester
-    visit '/sql'
-    assert !find_field('query').value.nil?
+    visit('/sql')
+    assert(!find_field('query').value.nil?)
   end
 
   def test_executes_query
     start_as_tester
-    visit '/sql'
-    fill_in 'query', with: 'SELECT * from human LIMIT 1'
-    click_button 'Query'
-    assert page.has_no_text?('Empty result.')
+    visit('/sql')
+    fill_in('query', with: 'SELECT * from human LIMIT 1')
+    click_button('Query')
+    assert(page.has_no_text?('Empty result.'))
   end
 
   def test_executes_query_with_empty_result
     start_as_tester
-    visit '/sql'
-    fill_in 'query', with: "SELECT * from token WHERE human = #{tester_human.id} AND active LIMIT 1"
-    click_button 'Query'
-    assert page.has_text?('Empty result.')
+    visit('/sql')
+    fill_in('query', with: "SELECT * from token WHERE human = #{tester_human.id} AND active LIMIT 1")
+    click_button('Query')
+    assert(page.has_text?('Empty result.'))
   end
 end

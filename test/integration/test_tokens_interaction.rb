@@ -31,36 +31,36 @@ class Baza::TokensInteractionTest < Minitest::Test
 
   def test_adds_token
     start_as_tester
-    click_link 'Tokens'
+    click_link('Tokens')
     token_name = fake_name
-    fill_in 'Unique token name', with: token_name
-    click_button 'Add'
-    assert tester_human.tokens.exists?(token_name)
-    assert page.has_content?(token_name)
-    assert page.has_text?(/New token #\d+ added/)
+    fill_in('Unique token name', with: token_name)
+    click_button('Add')
+    assert(tester_human.tokens.exists?(token_name))
+    assert(page.has_content?(token_name))
+    assert(page.has_text?(/New token #\d+ added/))
   end
 
   def test_does_not_add_repetitive_token
     start_as_tester
-    click_link 'Tokens'
+    click_link('Tokens')
     token_name = fake_name
-    fill_in 'Unique token name', with: token_name
-    click_button 'Add'
-    assert page.has_content?(token_name)
-    assert page.has_text?(/New token #\d+ added/)
+    fill_in('Unique token name', with: token_name)
+    click_button('Add')
+    assert(page.has_content?(token_name))
+    assert(page.has_text?(/New token #\d+ added/))
 
-    fill_in 'Unique token name', with: token_name
-    click_button 'Add'
-    assert_current_path '/dash'
+    fill_in('Unique token name', with: token_name)
+    click_button('Add')
+    assert_current_path('/dash')
   end
 
   def test_does_not_add_token_with_invalid_name
     start_as_tester
-    click_link 'Tokens'
+    click_link('Tokens')
     token_name = '12345'
-    fill_in 'Unique token name', with: token_name
-    click_button 'Add'
-    assert_current_path '/dash'
+    fill_in('Unique token name', with: token_name)
+    click_button('Add')
+    assert_current_path('/dash')
   end
 
   def test_deactivates_token
@@ -70,8 +70,8 @@ class Baza::TokensInteractionTest < Minitest::Test
     name = fake_name
     token = tokens.add(name)
     assert(token.active?)
-    visit "/tokens/#{token.id}/deactivate"
-    assert page.has_text?("##{token.id}")
+    visit("/tokens/#{token.id}/deactivate")
+    assert(page.has_text?("##{token.id}"))
     tokens.get(token.id)
     assert(!token.active?)
   end

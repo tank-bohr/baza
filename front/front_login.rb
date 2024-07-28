@@ -26,23 +26,21 @@ require 'unpiercable'
 require_relative '../objects/baza/human'
 
 configure do
-  set :glogin, GLogin::Auth.new(
-    settings.config['github']['id'],
-    settings.config['github']['secret'],
-    'https://www.zerocracy.com/github-callback'
-  )
+  set :glogin,
+      GLogin::Auth.new(
+        settings.config['github']['id'],
+        settings.config['github']['secret'],
+        'https://www.zerocracy.com/github-callback'
+      )
 end
 
 before '/*' do
   cookies[:auth] = params[:auth] if params[:auth]
   if cookies[:auth]
     begin
-      json = GLogin::Cookie::Closed.new(
-        cookies[:auth],
-        settings.config['github']['encryption_secret']
-      ).to_user
-      id = json['id'].to_i
-      raise GLogin::Codec::DecodingError unless id.positive?
+      json = GLogin::Cookie::Closed.new(cookies[:auth], settings.config['github']['encryption_secret']).to_user
+      id = Integer(json['id'], 10)
+      raise(GLogin::Codec::DecodingError) unless id.positive?
       @locals[:human] = id
       @locals[:human_login] = json['login']
     rescue GLogin::Codec::DecodingError => e
@@ -60,9 +58,9 @@ get '/fake-login' do
   login = 'tester'
   cookies[:auth] = GLogin::Cookie::Open.new(
     {
-      'id' => settings.humans.ensure(login).id.to_s,
-      'login' => login,
-      'avatar_url' => 'none'
+      id: settings.humans.ensure(login).id.to_s,
+      login:,
+      avatar_url: 'none'
     },
     ''
   ).to_s
@@ -76,9 +74,9 @@ get '/github-callback' do
   login = json['login']
   cookies[:auth] = GLogin::Cookie::Open.new(
     {
-      'id' => settings.humans.ensure(login).id.to_s,
-      'login' => login,
-      'avatar_url' => json['avatar_url']
+      id: settings.humans.ensure(login).id.to_s,
+      login:,
+      avatar_url: json['avatar_url']
     },
     settings.config['github']['encryption_secret']
   ).to_s
@@ -92,8 +90,5 @@ end
 
 def the_human
   flash(iri.cut('/'), 'You have to login first') unless @locals[:human]
-  Unpiercable.new(
-    settings.humans.get(@locals[:human]),
-    github: @locals[:human_login]
-  ).extend(Baza::Human::Admin)
+  Unpiercable.new(settings.humans.get(@locals[:human]), github: @locals[:human_login]).extend(Baza::Human::Admin)
 end

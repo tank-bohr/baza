@@ -23,9 +23,9 @@
 # SOFTWARE.
 
 require 'minitest/autorun'
-require_relative '../test__helper'
 require_relative '../../objects/baza'
 require_relative '../../objects/baza/humans'
+require_relative '../test__helper'
 
 # Test.
 # Author:: Yegor Bugayenko (yegor256@gmail.com)
@@ -59,7 +59,7 @@ class Baza::ValveTest < Minitest::Test
     valves = human.valves
     n = fake_name
     b = fake_name
-    assert_raises { valves.enter(n, b, 'why') { raise 'intentional' } }
+    assert_raises { valves.enter(n, b, 'why') { raise('intentional') } }
     assert_equal(42, valves.enter(n, b, 'why') { 42 })
   end
 
@@ -72,7 +72,7 @@ class Baza::ValveTest < Minitest::Test
     Thread.new do
       valves.enter(n, b, 'no reason') do
         entered = true
-        sleep 0.05
+        sleep(0.05)
         42
       end
     end

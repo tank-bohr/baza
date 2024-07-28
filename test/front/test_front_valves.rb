@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'factbase'
 # MIT License
 #
 # Copyright (c) 2009-2024 Zerocracy
@@ -23,10 +24,9 @@
 # SOFTWARE.
 
 require 'minitest/autorun'
-require 'factbase'
-require_relative '../test__helper'
-require_relative '../../objects/baza'
 require_relative '../../baza'
+require_relative '../../objects/baza'
+require_relative '../test__helper'
 
 class Baza::FrontValvesTest < Minitest::Test
   def app

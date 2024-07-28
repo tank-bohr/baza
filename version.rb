@@ -30,4 +30,5 @@ require_relative 'objects/baza'
 # License:: MIT
 module Baza
   VERSION = '0.0.0'
+  public_constant :VERSION
 end

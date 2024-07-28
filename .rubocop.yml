@@ -30,6 +30,7 @@ AllCops:
   TargetRubyVersion: 3.2
   NewCops: enable
   SuggestExtensions: false
+  EnabledByDefault: true
 
 Layout/RescueEnsureAlignment:
   Enabled: false
@@ -64,4 +65,22 @@ Metrics/MethodLength:
 Metrics/AbcSize:
   Enabled: false
 Metrics/ParameterLists:
+  Enabled: false
+Bundler/GemComment:
+  Enabled: false
+Bundler/GemVersion:
+  Enabled: false
+Lint/ConstantResolution:
+  Enabled: false
+Style/DocumentationMethod:
+  Enabled: false
+Style/DisableCopsWithinSourceCodeDirective:
+  Enabled: false
+Style/ImplicitRuntimeError:
+  Enabled: false
+Style/MissingElse:
+  Enabled: false
+Style/TopLevelMethodDefinition:
+  Enabled: false
+Style/Copyright:
   Enabled: false

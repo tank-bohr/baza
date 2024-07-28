@@ -23,16 +23,11 @@
 # SOFTWARE.
 
 get '/secrets' do
-  assemble(
-    :secrets,
-    :default,
-    title: '/secrets',
-    secrets: the_human.secrets
-  )
+  assemble(:secrets, :default, title: '/secrets', secrets: the_human.secrets)
 end
 
 get(%r{/secrets/([0-9]+)/remove}) do
-  id = params['captures'].first.to_i
+  id = Integer(params['captures'].first, 10)
   the_human.secrets.remove(id)
   flash(iri.cut('/secrets'), "The secret ##{id} just removed")
 end
