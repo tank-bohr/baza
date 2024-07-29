@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'always'
+require 'decoor'
 # MIT License
 #
 # Copyright (c) 2009-2024 Zerocracy
@@ -23,11 +25,9 @@
 # SOFTWARE.
 
 require 'iri'
-require 'always'
 require 'loog'
-require 'telepost'
-require 'decoor'
 require 'securerandom'
+require 'telepost'
 
 # Telegram Bot.
 # Author:: Yegor Bugayenko (yegor256@gmail.com)
@@ -95,10 +95,7 @@ class Baza::Tbot
   # @return [String] Secret to use in web auth
   def entry(chat)
     if @pgsql.exec('SELECT id FROM telechat WHERE id = $1', [chat]).empty?
-      @pgsql.exec(
-        'INSERT INTO telechat (id, secret) VALUES ($1, $2)',
-        [chat, SecureRandom.uuid]
-      )
+      @pgsql.exec('INSERT INTO telechat (id, secret) VALUES ($1, $2)', [chat, SecureRandom.uuid])
     end
     row = @pgsql.exec(
       [
@@ -107,11 +104,9 @@ class Baza::Tbot
         'WHERE telechat.id = $1'
       ],
       [chat]
-    )[0]
+    ).first
     if row['id'].nil?
-      auth = Iri.new('https://www.zerocracy.com')
-        .append('tauth')
-        .add(secret: row['secret'])
+      auth = Iri.new('https://www.zerocracy.com').append('tauth').add(secret: row['secret'])
       @tp.post(
         chat,
         '🐶 I\'m sorry, I don\'t know you as of yet. Please',
@@ -133,9 +128,9 @@ class Baza::Tbot
   end
 
   def notify(human, *lines)
-    row = @pgsql.exec('SELECT id FROM telechat WHERE human = $1', [human.id])[0]
+    row = @pgsql.exec('SELECT id FROM telechat WHERE human = $1', [human.id]).first
     return if row.nil?
-    chat = row['id'].to_i
+    chat = Integer(row['id'], 10)
     msg = lines.join(' ')
     @tp.post(chat, msg)
   end
@@ -144,15 +139,15 @@ class Baza::Tbot
   # @return [Integer] Chat ID in TG
   def auth(human, secret)
     unless @pgsql.exec('SELECT id FROM telechat WHERE human = $1', [human.id]).empty?
-      raise Baza::Urror, 'Most probably you are already using another Telegram chat'
+      raise(Baza::Urror, 'Most probably you are already using another Telegram chat')
     end
     rows = @pgsql.exec('UPDATE telechat SET human = $1 WHERE secret = $2 RETURNING id', [human.id, secret])
-    raise Baza::Urror, 'There is no user by this authentication code' if rows.empty?
+    raise(Baza::Urror, 'There is no user by this authentication code') if rows.empty?
     human.notify(
       "🍉 Now I know that you are `@#{human.github}`!",
       'Thanks for authorizing your account.',
       'Now, you will receive all important notifications here.'
     )
-    rows.first['id'].to_i
+    Integer(rows.first['id'], 10)
   end
 end

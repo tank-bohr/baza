@@ -35,7 +35,7 @@ class Baza::Job
 
   def initialize(jobs, id)
     @jobs = jobs
-    raise 'Job ID must be an integer' unless id.is_a?(Integer)
+    raise('Job ID must be an integer') unless id.is_a?(Integer)
     @id = id
   end
 
@@ -45,7 +45,7 @@ class Baza::Job
 
   # Delete the data of the job, that take space.
   def expire!(fbs)
-    raise Baza::Urror, 'The job is already expired' if expired?
+    raise(Baza::Urror, 'The job is already expired') if expired?
     @jobs.pgsql.transaction do |t|
       t.exec('UPDATE job SET expired = now() WHERE id = $1', [@id])
       t.exec(
@@ -78,32 +78,38 @@ class Baza::Job
   # @param [Integer] errors How many errors found in the summary?
   # @return [Baza::Result] The result just created
   def finish!(uri2, stdout, exit, msec, size = nil, errors = nil)
-    raise Baza::Urror, 'Exit code is nil' if exit.nil?
-    raise Baza::Urror, 'Exit code must be a Number' unless exit.is_a?(Integer)
-    raise Baza::Urror, 'Milliseconds is nil' if msec.nil?
-    raise Baza::Urror, 'Milliseconds must be a Number' unless msec.is_a?(Integer)
-    raise Baza::Urror, 'STDOUT is nil' if stdout.nil?
-    raise Baza::Urror, 'STDOUT must be a String' unless stdout.is_a?(String)
-    raise Baza::Urror, 'Size must be positive' unless size.nil? || size.positive?
-    raise Baza::Urror, 'Number of errors cannot be negative' unless errors.nil? || !errors.negative?
-    raise Baza::Urror, 'When exit code is zero, size is mandatory' if exit.zero? && size.nil?
-    raise Baza::Urror, 'When exit code is zero, errors count is mandatory' if exit.zero? && errors.nil?
+    raise(Baza::Urror, 'Exit code is nil') if exit.nil?
+    raise(Baza::Urror, 'Exit code must be a Number') unless exit.is_a?(Integer)
+    raise(Baza::Urror, 'Milliseconds is nil') if msec.nil?
+    raise(Baza::Urror, 'Milliseconds must be a Number') unless msec.is_a?(Integer)
+    raise(Baza::Urror, 'STDOUT is nil') if stdout.nil?
+    raise(Baza::Urror, 'STDOUT must be a String') unless stdout.is_a?(String)
+    raise(Baza::Urror, 'Size must be positive') unless size.nil? || size.positive?
+    raise(Baza::Urror, 'Number of errors cannot be negative') unless errors.nil? || !errors.negative?
+    raise(Baza::Urror, 'When exit code is zero, size is mandatory') if exit.zero? && size.nil?
+    raise(Baza::Urror, 'When exit code is zero, errors count is mandatory') if exit.zero? && errors.nil?
     summary =
       "Job ##{id} #{exit.zero? ? 'completed' : "failed (#{exit})"} " \
       "in #{msec}ms, #{stdout.split("\n").size} lines in stdout"
     @jobs.pgsql.transaction do |t|
-      t.exec(
-        'INSERT INTO receipt (human, zents, summary, job) VALUES ($1, $2, $3, $4) RETURNING id',
-        [@jobs.human.id, -(@jobs.human.price * msec).to_i, summary, id]
-      )[0]['id'].to_i
-      @jobs.human.results.get(
+      Integer(
         t.exec(
-          [
-            'INSERT INTO result (job, uri2, stdout, exit, msec, size, errors) ',
-            'VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id'
-          ],
-          [id, uri2, stdout, exit, msec, size, errors]
-        )[0]['id'].to_i
+          'INSERT INTO receipt (human, zents, summary, job) VALUES ($1, $2, $3, $4) RETURNING id',
+          [@jobs.human.id, -Integer((@jobs.human.price * msec), 10), summary, id]
+        )[0]['id'],
+        10
+      )
+      @jobs.human.results.get(
+        Integer(
+          t.exec(
+            [
+              'INSERT INTO result (job, uri2, stdout, exit, msec, size, errors) ',
+              'VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id'
+            ],
+            [id, uri2, stdout, exit, msec, size, errors]
+          )[0]['id'],
+          10
+        )
       )
     end
     balance = @jobs.human.account.balance
@@ -208,24 +214,24 @@ class Baza::Job
           ],
           [@id, sep, @jobs.human.id]
         ).first
-        raise Baza::Urror, "There is no job ##{@id}" if row.nil?
+        raise(Baza::Urror, "There is no job ##{@id}") if row.nil?
         {
           id: @id,
           name: row['name'].downcase,
           created: Time.parse(row['created']),
           uri1: row['uri1'],
-          token: row['token'].to_i,
+          token: Integer(row['token'], 10),
           taken: row['taken'],
           when_locked: row['when_locked'].nil? ? nil : Time.parse(row['when_locked']),
           lock_owner: row['lock_owner'],
-          size: row['size'].to_i,
+          size: Integer(row['size'], 10),
           metas: (row['metas'] || '').split(sep),
-          errors: row['errors'].to_i,
+          errors: Integer(row['errors'], 10),
           agent: row['agent'],
           finished: !row['rid'].nil?,
           expired: !row['expired'].nil?,
-          result: row['rid'].nil? ? nil : @jobs.human.results.get(row['rid'].to_i),
-          receipt: row['tid'].nil? ? nil : @jobs.human.account.get(row['tid'].to_i)
+          result: row['rid'].nil? ? nil : @jobs.human.results.get(Integer(row['rid'], 10)),
+          receipt: row['tid'].nil? ? nil : @jobs.human.account.get(Integer(row['tid'], 10))
         }
       end
   end

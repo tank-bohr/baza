@@ -23,13 +23,7 @@
 # SOFTWARE.
 
 get '/valves' do
-  assemble(
-    :valves,
-    :default,
-    title: '/valves',
-    valves: the_human.valves,
-    offset: (params[:offset] || '0').to_i
-  )
+  assemble(:valves, :default, title: '/valves', valves: the_human.valves, offset: Integer((params[:offset] || '0'), 10))
 end
 
 post('/valve-add') do
@@ -38,7 +32,7 @@ post('/valve-add') do
 end
 
 get(%r{/valves/([0-9]+)/remove}) do
-  id = params['captures'].first.to_i
+  id = Integer(params['captures'].first, 10)
   the_human.valves.remove(id)
   flash(iri.cut('/valves'), "The valve ##{id}' just removed")
 end

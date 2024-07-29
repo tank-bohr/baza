@@ -53,10 +53,5 @@ get(%r{/(terms)}) do
   n = params['captures'].first
   f = File.join(File.absolute_path('./assets/markdown/'), "#{n}.md")
   html = Redcarpet::Markdown.new(Redcarpet::Render::HTML).render(File.read(f))
-  assemble(
-    :markdown,
-    :empty,
-    title: "/#{n}",
-    html:
-  )
+  assemble(:markdown, :empty, title: "/#{n}", html:)
 end

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'cgi'
+require 'securerandom'
 # MIT License
 #
 # Copyright (c) 2009-2024 Zerocracy
@@ -23,8 +25,6 @@
 # SOFTWARE.
 
 require 'tago'
-require 'cgi'
-require 'securerandom'
 
 # Front helpers.
 # Author:: Yegor Bugayenko (yegor256@gmail.com)
@@ -37,7 +37,8 @@ module Baza::Helpers
 
   def html_tag(tag, attrs = {})
     html = block_given? ? yield : ''
-    a = attrs.map { |k, v| "#{k}=\"#{CGI.escapeHTML(v.to_s)}\"" }.join(' ')
+    a = attrs.map { |k, v| "#{k}=\"#{CGI.escapeHTML(v.to_s)}\"" }
+.join(' ')
     "<#{tag}#{a.empty? ? '' : " #{a}"}>#{html}</#{tag}>"
   end
 
@@ -52,10 +53,7 @@ module Baza::Helpers
       elsif txt.size < 5
         html_tag('span', class: 'gray') { ('*' * txt.size).to_s }
       else
-        [
-          html_tag('span') { txt[0..3] },
-          html_tag('span', class: 'gray') { ('*' * (txt.size - 4)).to_s }
-        ].join
+        [html_tag('span') { txt[0..3] }, html_tag('span', class: 'gray') { ('*' * (txt.size - 4)).to_s }].join
       end
     return body unless eye
     uuid = SecureRandom.uuid
@@ -65,10 +63,7 @@ module Baza::Helpers
       "$('##{uuid} a.copy').show();",
       'return false;'
     ].join
-    js_copy = [
-      "navigator.clipboard.writeText(decodeURIComponent('#{escape(txt)}'));",
-      'return false;'
-    ].join
+    js_copy = ["navigator.clipboard.writeText(decodeURIComponent('#{escape(txt)}'));", 'return false;'].join
     html_tag('span', id: uuid) do
       [
         html_tag('span', id: uuid) { body },
@@ -101,11 +96,12 @@ module Baza::Helpers
     if meta.nil?
       ''
     else
-      yield meta.split("#{name}:", 2)[1]
+      yield(meta.split("#{name}:", 2)[1])
     end
   end
 
   def large_text(text)
+    # rubocop:disable Style/MethodCalledOnDoEndBlock
     text
       .tr("\n", '↵')
       .scan(/.{1,4}/)
@@ -118,6 +114,7 @@ module Baza::Helpers
       .chars
       .map { |c| c.ord > 0x7f ? "<span class='firebrick'>\\x#{format('%x', c.ord)}</span>" : c }
       .join
+    # rubocop:enable Style/MethodCalledOnDoEndBlock
   end
 
   def ago(time)
@@ -125,7 +122,7 @@ module Baza::Helpers
   end
 
   def usd(num, digits: 4)
-    format("%+.#{digits}f", num.to_f / (1000 * 100))
+    format("%+.#{digits}f", Float(num) / (1000 * 100))
   end
 
   def zents(num, digits: 4)
@@ -171,14 +168,12 @@ module Baza::Helpers
   end
 
   def footer_status(title)
-    always = settings.send(title)
+    always = settings.public_send(title)
     s = always.to_s
-    a, b, c = s.split('/').map(&:to_i)
+    a, b, c = s.split('/').map { |i| Integer(i, 10) }
     return "#{title}:#{s[0..40].inspect}" if c.nil?
     if c.positive?
-      c =
-        "<a href='#{iri.cut('/footer/status').add(badge: title)}'>" \
-        "<span style='color:firebrick;'>#{c}</span></a>"
+      c = "<a href='#{iri.cut('/footer/status').add(badge: title)}'><span style='color:firebrick;'>#{c}</span></a>"
     end
     "#{title}:#{a}/#{b}/#{c}"
   end

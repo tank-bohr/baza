@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'loog'
 # MIT License
 #
 # Copyright (c) 2009-2024 Zerocracy
@@ -23,12 +24,11 @@
 # SOFTWARE.
 
 require 'minitest/autorun'
-require 'loog'
-require_relative '../test__helper'
 require_relative '../../objects/baza'
+require_relative '../../objects/baza/humans'
 require_relative '../../objects/baza/tbot'
 require_relative '../../objects/baza/urror'
-require_relative '../../objects/baza/humans'
+require_relative '../test__helper'
 
 # Test.
 # Author:: Yegor Bugayenko (yegor256@gmail.com)

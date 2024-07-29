@@ -41,45 +41,45 @@ class Baza::ValvesInteractionTest < Minitest::Test
       valves.remove(v[:id])
     end
 
-    visit '/push'
-    fill_in 'token', with: token.text
+    visit('/push')
+    fill_in('token', with: token.text)
     job_name = fake_name
-    fill_in 'name', with: job_name
-    click_button 'Start'
-    visit '/valves'
+    fill_in('name', with: job_name)
+    click_button('Start')
+    visit('/valves')
     badge = fake_name
     result = fake_name
     why = fake_name
-    fill_in 'name', with: job_name
-    fill_in 'badge', with: badge
-    fill_in 'result', with: result
-    fill_in 'why', with: why
-    click_button 'Add'
+    fill_in('name', with: job_name)
+    fill_in('badge', with: badge)
+    fill_in('result', with: result)
+    fill_in('why', with: why)
+    click_button('Add')
 
-    assert_current_path '/valves'
-    assert page.has_text?(job_name)
-    assert page.has_no_selector?('i[title="There is no job by this name, maybe a spelling error?"]')
-    assert page.has_text?(badge)
-    assert page.has_text?("\"#{result}\"")
+    assert_current_path('/valves')
+    assert(page.has_text?(job_name))
+    assert(page.has_no_selector?('i[title="There is no job by this name, maybe a spelling error?"]'))
+    assert(page.has_text?(badge))
+    assert(page.has_text?("\"#{result}\""))
   end
 
   def test_adds_valve_without_job
     start_as_tester
-    visit '/valves'
+    visit('/valves')
     job_name = fake_name
     badge = fake_name
     result = fake_name
     why = fake_name
-    fill_in 'name', with: job_name
-    fill_in 'badge', with: badge
-    fill_in 'result', with: result
-    fill_in 'why', with: why
-    click_button 'Add'
-    assert_current_path '/valves'
-    assert page.has_text?(job_name)
-    assert page.has_selector?('i[title="There is no job by this name, maybe a spelling error?"]')
-    assert page.has_text?(badge)
-    assert page.has_text?("\"#{result}\"")
+    fill_in('name', with: job_name)
+    fill_in('badge', with: badge)
+    fill_in('result', with: result)
+    fill_in('why', with: why)
+    click_button('Add')
+    assert_current_path('/valves')
+    assert(page.has_text?(job_name))
+    assert(page.has_selector?('i[title="There is no job by this name, maybe a spelling error?"]'))
+    assert(page.has_text?(badge))
+    assert(page.has_text?("\"#{result}\""))
   end
 
   def test_removes_valve
@@ -93,7 +93,7 @@ class Baza::ValvesInteractionTest < Minitest::Test
     b = fake_name
     valves.enter(n, b, 'why') { 42 }
     v = valves.each.to_a.first
-    visit "/valves/#{v[:id]}/remove"
-    assert valves.empty?
+    visit("/valves/#{v[:id]}/remove")
+    assert(valves.empty?)
   end
 end

@@ -42,10 +42,7 @@ class Baza::Valves
   end
 
   def empty?
-    pgsql.exec(
-      'SELECT id FROM valve WHERE human = $1',
-      [@human.id]
-    ).empty?
+    pgsql.exec('SELECT id FROM valve WHERE human = $1', [@human.id]).empty?
   end
 
   def each(offset: 0)
@@ -57,36 +54,36 @@ class Baza::Valves
         'WHERE human = $1',
         'GROUP BY valve.id',
         'ORDER BY valve.created DESC',
-        "OFFSET #{offset.to_i}"
+        "OFFSET #{Integer(offset, 10)}"
       ],
       [@human.id]
     ).each do |row|
       v = {
-        id: row['id'].to_i,
+        id: Integer(row['id'], 10),
         created: Time.parse(row['created']),
         name: row['name'],
         badge: row['badge'],
         result: dec(row['result']),
         why: row['why'],
-        jobs: row['jobs'].to_i
+        jobs: Integer(row['jobs'], 10)
       }
-      yield v
+      yield(v)
     end
   end
 
   def enter(name, badge, why)
-    raise 'A block is required by the enter()' unless block_given?
-    raise Baza::Urror, 'The name cannot be nil' if name.nil?
-    raise Baza::Urror, 'The name cannot be empty' if name.empty?
-    raise Baza::Urror, 'The name is not valid' unless name.match?(/^[a-z0-9]+$/)
-    raise Baza::Urror, 'The badge cannot be nil' if badge.nil?
-    raise Baza::Urror, 'The badge cannot be empty' if badge.empty?
-    raise Baza::Urror, "The badge '#{badge}' is not valid" unless badge.match?(/^[a-zA-Z0-9_-]+$/)
-    raise Baza::Urror, 'The reason cannot be empty' if why.empty?
+    raise('A block is required by the enter()') unless block_given?
+    raise(Baza::Urror, 'The name cannot be nil') if name.nil?
+    raise(Baza::Urror, 'The name cannot be empty') if name.empty?
+    raise(Baza::Urror, 'The name is not valid') unless name.match?(/^[a-z0-9]+$/)
+    raise(Baza::Urror, 'The badge cannot be nil') if badge.nil?
+    raise(Baza::Urror, 'The badge cannot be empty') if badge.empty?
+    raise(Baza::Urror, "The badge '#{badge}' is not valid") unless badge.match?(/^[a-zA-Z0-9_-]+$/)
+    raise(Baza::Urror, 'The reason cannot be empty') if why.empty?
     start = Time.now
-    catch :stop do
+    catch(:stop) do
       loop do
-        catch :rollback do
+        catch(:rollback) do
           pgsql.transaction do |t|
             row = t.exec(
               [
@@ -96,20 +93,20 @@ class Baza::Valves
                 'RETURNING id, owner, result'
               ],
               [@human.id, name.downcase, badge, why]
-            )[0]
+            ).first
             unless row['result'].nil?
               t.exec('ROLLBACK')
               return dec(row['result'])
             end
             unless row['owner'] == '1'
               t.exec('ROLLBACK')
-              throw :rollback
+              throw(:rollback)
             end
             t.exec('COMMIT')
-            throw :stop
+            throw(:stop)
           end
         end
-        raise "Time out while waiting for '#{badge}'" if Time.now - start > 60
+        raise("Time out while waiting for '#{badge}'") if Time.now - start > 60
       end
     end
     begin
@@ -125,19 +122,13 @@ class Baza::Valves
       )
       r
     rescue StandardError => e
-      pgsql.exec(
-        'DELETE FROM valve WHERE human = $1 AND name = $2 AND badge = $3',
-        [@human.id, name.downcase, badge]
-      )
-      raise e
+      pgsql.exec('DELETE FROM valve WHERE human = $1 AND name = $2 AND badge = $3', [@human.id, name.downcase, badge])
+      raise(e)
     end
   end
 
   def remove(id)
-    pgsql.exec(
-      'DELETE FROM valve WHERE id = $1 AND human = $2',
-      [id, @human.id]
-    )
+    pgsql.exec('DELETE FROM valve WHERE id = $1 AND human = $2', [id, @human.id])
   end
 
   private

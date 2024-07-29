@@ -40,7 +40,7 @@ class Baza::Results
   end
 
   def get(id)
-    raise 'Result ID must be an integer' unless id.is_a?(Integer)
+    raise('Result ID must be an integer') unless id.is_a?(Integer)
     Baza::Result.new(self, id)
   end
 end

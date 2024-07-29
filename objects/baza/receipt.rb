@@ -63,13 +63,13 @@ class Baza::Receipt
           ],
           [@id, @account.human.id]
         ).first
-        raise Baza::Urror, "There is no receipt ##{@id}" if row.nil?
+        raise(Baza::Urror, "There is no receipt ##{@id}") if row.nil?
         {
           id: @id,
-          zents: row['zents'].to_i,
+          zents: Integer(row['zents'], 10),
           created: Time.parse(row['created']),
           summary: row['summary'],
-          job_id: row['job']&.to_i
+          job_id: Integer(row['job'], 10)
         }
       end
   end

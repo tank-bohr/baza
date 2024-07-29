@@ -31,7 +31,7 @@ class Baza::Result
 
   def initialize(results, id)
     @results = results
-    raise 'Result ID must be an integer' unless id.is_a?(Integer)
+    raise('Result ID must be an integer') unless id.is_a?(Integer)
     @id = id
   end
 
@@ -49,12 +49,12 @@ class Baza::Result
 
   def size
     s = @results.pgsql.exec('SELECT size FROM result WHERE id = $1', [@id])[0]['size']
-    s.nil? ? s : s.to_i
+    s.nil? ? s : Integer(s, 10)
   end
 
   def errors
     s = @results.pgsql.exec('SELECT errors FROM result WHERE id = $1', [@id])[0]['errors']
-    s.nil? ? s : s.to_i
+    s.nil? ? s : Integer(s, 10)
   end
 
   def stdout
@@ -62,11 +62,11 @@ class Baza::Result
   end
 
   def exit
-    @results.pgsql.exec('SELECT exit FROM result WHERE id = $1', [@id])[0]['exit'].to_i
+    Integer(@results.pgsql.exec('SELECT exit FROM result WHERE id = $1', [@id])[0]['exit'], 10)
   end
 
   def msec
-    @results.pgsql.exec('SELECT msec FROM result WHERE id = $1', [@id])[0]['msec'].to_i
+    Integer(@results.pgsql.exec('SELECT msec FROM result WHERE id = $1', [@id])[0]['msec'], 10)
   end
 
   def to_json(*_args)

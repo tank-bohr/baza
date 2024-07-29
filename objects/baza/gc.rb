@@ -44,9 +44,9 @@ class Baza::Gc
     q =
       'SELECT job.id FROM job WHERE token = $1 ' \
       'AND job.expired IS NULL ' \
-      "AND job.created < NOW() - INTERVAL '#{minutes.to_i} MINUTES'"
+      "AND job.created < NOW() - INTERVAL '#{Integer(minutes, 10)} MINUTES'"
     pgsql.exec(q, [tid]).each do |row|
-      yield @humans.job_by_id(row['id'].to_i)
+      yield(@humans.job_by_id(Integer(row['id'], 10)))
     end
   end
 
@@ -60,9 +60,9 @@ class Baza::Gc
       'AND result.id IS NULL ' \
       'AND job.expired IS NULL ' \
       'AND result.expired IS NULL ' \
-      "AND job.created < NOW() - INTERVAL '#{minutes.to_i} MINUTES'"
+      "AND job.created < NOW() - INTERVAL '#{Integer(minutes, 10)} MINUTES'"
     pgsql.exec(q).each do |row|
-      yield @humans.job_by_id(row['id'].to_i)
+      yield(@humans.job_by_id(Integer(row['id'], 10)))
     end
   end
 
@@ -76,10 +76,10 @@ class Baza::Gc
       'WHERE l.expired IS NULL ' \
       'GROUP BY l.id) AS f ' \
       'WHERE f.total > 1 ' \
-      "AND f.created < NOW() - INTERVAL '#{days.to_i} DAYS' " \
+      "AND f.created < NOW() - INTERVAL '#{Integer(days, 10)} DAYS' " \
       'AND f.recent != f.created'
     pgsql.exec(q).each do |row|
-      yield @humans.job_by_id(row['id'].to_i)
+      yield(@humans.job_by_id(Integer(row['id'], 10)))
     end
   end
 end

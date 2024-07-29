@@ -23,8 +23,8 @@
 # SOFTWARE.
 
 require 'minitest/autorun'
-require_relative '../test__helper'
 require_relative '../../baza'
+require_relative '../test__helper'
 
 class Baza::AppTest < Minitest::Test
   def app
@@ -53,10 +53,7 @@ class Baza::AppTest < Minitest::Test
   end
 
   def test_protected_pages
-    pages = [
-      '/sql', '/push', '/gift',
-      '/dash', '/tokens', '/jobs', '/account'
-    ]
+    pages = ['/sql', '/push', '/gift', '/dash', '/tokens', '/jobs', '/account']
     pages.each do |p|
       get(p)
       assert_status(302)

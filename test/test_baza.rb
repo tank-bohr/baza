@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'factbase'
 # MIT License
 #
 # Copyright (c) 2009-2024 Zerocracy
@@ -23,9 +24,8 @@
 # SOFTWARE.
 
 require 'minitest/autorun'
-require 'factbase'
-require_relative 'test__helper'
 require_relative '../baza'
+require_relative 'test__helper'
 
 class Baza::AppTest < Minitest::Test
   def app
@@ -33,14 +33,7 @@ class Baza::AppTest < Minitest::Test
   end
 
   def test_renders_public_pages
-    pages = [
-      '/version',
-      '/robots.txt',
-      '/',
-      '/svg/logo.svg',
-      '/png/logo-white.png',
-      '/css/main.css'
-    ]
+    pages = ['/version', '/robots.txt', '/', '/svg/logo.svg', '/png/logo-white.png', '/css/main.css']
     pages.each do |p|
       get(p)
       assert_status(200)
@@ -48,15 +41,7 @@ class Baza::AppTest < Minitest::Test
   end
 
   def test_renders_private_pages
-    pages = [
-      '/dash',
-      '/tokens',
-      '/jobs',
-      '/locks',
-      '/secrets',
-      '/valves',
-      '/account'
-    ]
+    pages = ['/dash', '/tokens', '/jobs', '/locks', '/secrets', '/valves', '/account']
     login
     pages.each do |p|
       get(p)
@@ -69,7 +54,7 @@ class Baza::AppTest < Minitest::Test
     get('/tokens')
     post('/tokens/add', 'name=foo')
     assert_status(302)
-    id = last_response.headers['X-Zerocracy-TokenId'].to_i
+    id = Integer(last_response.headers['X-Zerocracy-TokenId'], 10)
     assert(id.positive?)
     get("/tokens/#{id}/deactivate")
     assert_status(302)

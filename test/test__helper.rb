@@ -31,23 +31,25 @@ require 'simplecov-cobertura'
 SimpleCov.formatter = SimpleCov::Formatter::CoberturaFormatter
 
 require 'minitest/reporters'
-Minitest::Reporters.use! [Minitest::Reporters::SpecReporter.new]
+Minitest::Reporters.use!([Minitest::Reporters::SpecReporter.new])
 
-require 'yaml'
-require 'minitest/autorun'
-require 'pgtk/pool'
-require 'loog'
-require 'securerandom'
-require 'rack/test'
-require 'glogin/cookie'
 require 'capybara'
 require 'capybara/dsl'
+require 'glogin/cookie'
+require 'loog'
+require 'minitest/autorun'
+require 'pgtk/pool'
+require 'rack/test'
+require 'securerandom'
+require 'yaml'
 
 module Rack
   module Test
     class Session
       def default_env
-        { 'REMOTE_ADDR' => '127.0.0.1', 'HTTPS' => 'on' }.merge(headers_for_env)
+        # rubocop:disable Style/IpAddresses
+        { REMOTE_ADDR: '127.0.0.1', HTTPS: 'on' }.merge(headers_for_env)
+        # rubocop:enable Style/IpAddresses
       end
     end
   end
@@ -58,9 +60,9 @@ class Minitest::Test
   include Capybara::DSL
 
   def setup
-    require 'sinatra'
+    require('sinatra')
     Capybara.app = Sinatra::Application.new
-    page.driver.header 'User-Agent', 'Capybara'
+    page.driver.header('User-Agent', 'Capybara')
   end
 
   def fake_pgsql
@@ -77,16 +79,14 @@ class Minitest::Test
   end
 
   def login(name = fake_name)
-    enc = GLogin::Cookie::Open.new(
-      { 'login' => name, 'id' => app.humans.ensure(name).id.to_s },
-      ''
-    ).to_s
+    enc = GLogin::Cookie::Open.new({ login: name, id: app.humans.ensure(name).id.to_s }, '').to_s
     set_cookie("auth=#{enc}")
   end
 
   def assert_status(code)
     assert_equal(
-      code, last_response.status,
+      code,
+      last_response.status,
       "#{last_request.url}:\n#{last_response.headers}\n#{last_response.body}"
     )
   end
@@ -97,8 +97,8 @@ class Minitest::Test
 
   def start_as_tester
     login('tester')
-    visit '/dash'
-    click_link 'Start'
+    visit('/dash')
+    click_link('Start')
     tester_human.tokens.each(&:deactivate!)
   end
 end

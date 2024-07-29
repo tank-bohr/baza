@@ -31,60 +31,60 @@ class Baza::GiftInteractionTest < Minitest::Test
 
   def test_adds_positive_gift
     start_as_tester
-    visit '/gift'
-    assert_equal 'tester', find_field('human').value
+    visit('/gift')
+    assert_equal('tester', find_field('human').value)
     zents = 100_000
     summary = fake_name
-    fill_in 'zents', with: zents
-    fill_in 'summary', with: summary
-    click_button 'Add'
-    assert_current_path '/account'
-    assert page.has_text?(summary)
-    assert page.has_text?("+#{format('%.4f', zents / 100_000)}")
+    fill_in('zents', with: zents)
+    fill_in('summary', with: summary)
+    click_button('Add')
+    assert_current_path('/account')
+    assert(page.has_text?(summary))
+    assert(page.has_text?("+#{format('%.4f', zents / 100_000)}"))
   end
 
   def test_adds_negative_gift
     start_as_tester
-    visit '/gift'
-    assert_equal 'tester', find_field('human').value
+    visit('/gift')
+    assert_equal('tester', find_field('human').value)
     zents = -100_000
     summary = fake_name
-    fill_in 'zents', with: zents
-    fill_in 'summary', with: summary
-    click_button 'Add'
-    assert_current_path '/account'
-    assert page.has_text?(summary)
-    assert page.has_text?(format('%.4f', zents / 100_000).to_s)
+    fill_in('zents', with: zents)
+    fill_in('summary', with: summary)
+    click_button('Add')
+    assert_current_path('/account')
+    assert(page.has_text?(summary))
+    assert(page.has_text?(format('%.4f', zents / 100_000).to_s))
   end
 
   def test_does_not_add_gift_with_empty_human
     start_as_tester
-    visit '/gift'
+    visit('/gift')
     zents = 200_000
     summary = fake_name
-    fill_in 'human', with: ''
-    fill_in 'zents', with: zents
-    fill_in 'summary', with: summary
-    click_button 'Add'
-    assert_current_path '/gift'
-    visit '/account'
-    assert page.has_no_text?(summary)
-    assert page.has_no_text?("+#{format('%.4f', zents / 100_000)}")
+    fill_in('human', with: '')
+    fill_in('zents', with: zents)
+    fill_in('summary', with: summary)
+    click_button('Add')
+    assert_current_path('/gift')
+    visit('/account')
+    assert(page.has_no_text?(summary))
+    assert(page.has_no_text?("+#{format('%.4f', zents / 100_000)}"))
   end
 
   def test_adds_gift_to_other_human
     start_as_tester
     human_name = fake_name
     Baza::Humans.new(fake_pgsql).ensure(human_name)
-    visit '/gift'
+    visit('/gift')
     zents = 200_000
     summary = fake_name
-    fill_in 'human', with: human_name
-    fill_in 'zents', with: zents
-    fill_in 'summary', with: summary
-    click_button 'Add'
-    assert_current_path '/account'
-    assert page.has_no_text?(summary)
-    assert page.has_no_text?("+#{format('%.4f', zents / 100_000)}")
+    fill_in('human', with: human_name)
+    fill_in('zents', with: zents)
+    fill_in('summary', with: summary)
+    click_button('Add')
+    assert_current_path('/account')
+    assert(page.has_no_text?(summary))
+    assert(page.has_no_text?("+#{format('%.4f', zents / 100_000)}"))
   end
 end

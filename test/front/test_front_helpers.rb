@@ -23,8 +23,8 @@
 # SOFTWARE.
 
 require 'minitest/autorun'
-require_relative '../test__helper'
 require_relative '../../baza'
+require_relative '../test__helper'
 
 class Baza::FrontHelpersTest < Minitest::Test
   include Baza::Helpers

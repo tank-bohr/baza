@@ -41,41 +41,41 @@ class Baza::SecretsInteractionTest < Minitest::Test
       secrets.remove(s[:id])
     end
 
-    visit '/push'
-    fill_in 'token', with: token.text
+    visit('/push')
+    fill_in('token', with: token.text)
     job_name = fake_name
-    fill_in 'name', with: job_name
-    click_button 'Start'
-    visit '/secrets'
+    fill_in('name', with: job_name)
+    click_button('Start')
+    visit('/secrets')
     key = fake_name
     value = fake_name
-    fill_in 'name', with: job_name
-    fill_in 'key', with: key
-    fill_in 'value', with: value
-    click_button 'Add'
+    fill_in('name', with: job_name)
+    fill_in('key', with: key)
+    fill_in('value', with: value)
+    click_button('Add')
 
-    assert_current_path '/secrets'
-    assert page.has_text?(job_name)
-    assert page.has_no_selector?('i[title="There is no job by this name, maybe a spelling error?"]')
-    assert page.has_text?(key)
-    assert page.has_text?(value[0..3])
+    assert_current_path('/secrets')
+    assert(page.has_text?(job_name))
+    assert(page.has_no_selector?('i[title="There is no job by this name, maybe a spelling error?"]'))
+    assert(page.has_text?(key))
+    assert(page.has_text?(value[0..3]))
   end
 
   def test_adds_secret_without_job
     start_as_tester
-    visit '/secrets'
+    visit('/secrets')
     job_name = fake_name
     key = fake_name
     value = fake_name
-    fill_in 'name', with: job_name
-    fill_in 'key', with: key
-    fill_in 'value', with: value
-    click_button 'Add'
-    assert_current_path '/secrets'
-    assert page.has_text?(job_name)
-    assert page.has_selector?('i[title="There is no job by this name, maybe a spelling error?"]')
-    assert page.has_text?(key)
-    assert page.has_text?(value[0..3])
+    fill_in('name', with: job_name)
+    fill_in('key', with: key)
+    fill_in('value', with: value)
+    click_button('Add')
+    assert_current_path('/secrets')
+    assert(page.has_text?(job_name))
+    assert(page.has_selector?('i[title="There is no job by this name, maybe a spelling error?"]'))
+    assert(page.has_text?(key))
+    assert(page.has_text?(value[0..3]))
   end
 
   def test_removes_secret
@@ -90,7 +90,7 @@ class Baza::SecretsInteractionTest < Minitest::Test
     v = fake_name * 10
     secrets.add(n, k, v)
     s = secrets.each.to_a.first
-    visit "/secrets/#{s[:id]}/remove"
-    assert secrets.each.to_a.empty?
+    visit("/secrets/#{s[:id]}/remove")
+    assert(secrets.each.to_a.empty?)
   end
 end

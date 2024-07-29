@@ -38,10 +38,7 @@ class Baza::Locks
   end
 
   def empty?
-    pgsql.exec(
-      'SELECT id FROM lock WHERE human = $1',
-      [@human.id]
-    ).empty?
+    pgsql.exec('SELECT id FROM lock WHERE human = $1', [@human.id]).empty?
   end
 
   def each(&)
@@ -57,18 +54,18 @@ class Baza::Locks
       [@human.id]
     ).each do |row|
       lk = {
-        id: row['id'].to_i,
+        id: Integer(row['id'], 10),
         created: Time.parse(row['created']),
         name: row['name'],
         owner: row['owner'],
-        jobs: row['jobs'].to_i
+        jobs: Integer(row['jobs'], 10)
       }
-      yield lk
+      yield(lk)
     end
   end
 
   def lock(name, owner)
-    raise Baza::Urror, 'The balance is negative' unless @human.account.balance.positive? || ENV['RACK_ENV'] == 'test'
+    raise(Baza::Urror, 'The balance is negative') unless @human.account.balance.positive? || ENV['RACK_ENV'] == 'test'
     begin
       pgsql.exec(
         [
@@ -79,21 +76,15 @@ class Baza::Locks
         [@human.id, name.downcase, owner]
       )
     rescue PG::UniqueViolation
-      raise Baza::Urror, "The '#{name}' lock is occupied by another owner, '#{owner}' can't get it now"
+      raise(Baza::Urror, "The '#{name}' lock is occupied by another owner, '#{owner}' can't get it now")
     end
   end
 
   def unlock(name, owner)
-    pgsql.exec(
-      'DELETE FROM lock WHERE human = $1 AND owner = $3 AND name = $2',
-      [@human.id, name.downcase, owner]
-    )
+    pgsql.exec('DELETE FROM lock WHERE human = $1 AND owner = $3 AND name = $2', [@human.id, name.downcase, owner])
   end
 
   def delete(id)
-    pgsql.exec(
-      'DELETE FROM lock WHERE id = $1 AND human = $2',
-      [id, @human.id]
-    )
+    pgsql.exec('DELETE FROM lock WHERE id = $1 AND human = $2', [id, @human.id])
   end
 end

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'base64'
+require 'factbase'
 # MIT License
 #
 # Copyright (c) 2009-2024 Zerocracy
@@ -23,16 +25,14 @@
 # SOFTWARE.
 
 require 'fileutils'
-require 'factbase'
-require 'base64'
 require 'zlib'
-require_relative '../objects/baza/urror'
 require_relative '../objects/baza/errors'
+require_relative '../objects/baza/urror'
 
 def user_agent
   agent = request.env['HTTP_USER_AGENT']
-  raise Baza::Urror, 'It is mandatory to provide User-Agent HTTP header' if agent.nil?
-  raise Baza::Urror, 'The User-Agent HTTP header cannot be empty' if agent.empty?
+  raise(Baza::Urror, 'It is mandatory to provide User-Agent HTTP header') if agent.nil?
+  raise(Baza::Urror, 'The User-Agent HTTP header cannot be empty') if agent.empty?
   agent
 end
 
@@ -44,18 +44,20 @@ end
 def job_start(token, file, name, metas)
   max_file_size = 10 * 1024 * 1024
   if file.size > max_file_size
-    raise Baza::Urror, "The uploaded file exceeds the maximum allowed size of #{max_file_size} bytes"
+    raise(Baza::Urror, "The uploaded file exceeds the maximum allowed size of #{max_file_size} bytes")
   end
   fb = Factbase.new
   begin
-    fb.import(File.binread(file.path)) # just to check that it's readable
+    # just to check that it's readable
+    fb.import(File.binread(file.path))
   rescue StandardError => e
-    raise Baza::Urror, "Cannot parse the data, try to upload again: #{e.message.inspect}"
+    raise(Baza::Urror, "Cannot parse the data, try to upload again: #{e.message.inspect}")
   end
-  raise Baza::Urror, "An existing job named '#{name}' is running now" if token.human.jobs.busy?(name)
+  raise(Baza::Urror, "An existing job named '#{name}' is running now") if token.human.jobs.busy?(name)
   fid = settings.fbs.save(file.path)
   token.start(
-    name, fid,
+    name,
+    fid,
     File.size(file.path),
     Baza::Errors.new(file.path).count,
     user_agent,
@@ -81,7 +83,7 @@ get '/push' do
     :push,
     :default,
     title: '/push',
-    token: the_human.tokens.size == 1 ? the_human.tokens.to_a[0].text : ''
+    token: the_human.tokens.size == 1 ? the_human.tokens.to_a.first.text : ''
   )
 end
 
@@ -141,7 +143,7 @@ end
 # Read the output of this job.
 get(%r{/stdout/([0-9]+).txt}) do
   the_human.locks.lock(params[:owner]) unless params[:owner].nil?
-  j = the_human.jobs.get(params['captures'].first.to_i)
+  j = the_human.jobs.get(Integer(params['captures'].first, 10))
   r = j.result
   content_type('text/plain')
   r.stdout
@@ -150,18 +152,18 @@ end
 # The job is finished?
 get(%r{/finished/([0-9]+)}) do
   the_human.locks.lock(params[:owner]) unless params[:owner].nil?
-  j = the_human.jobs.get(params['captures'].first.to_i)
+  j = the_human.jobs.get(Integer(params['captures'].first, 10))
   content_type('text/plain')
   j.finished? ? 'yes' : 'no'
 end
 
 get(%r{/pull/([0-9]+).fb}) do
   the_human.locks.lock(params[:owner]) unless params[:owner].nil?
-  j = the_human.jobs.get(params['captures'].first.to_i)
+  j = the_human.jobs.get(Integer(params['captures'].first, 10))
   r = j.result
   raise Baza::Urror, "The job ##{j.id} is expired" if j.expired?
   raise Baza::Urror, 'The result is empty' if r.empty?
-  raise Baza::Urror, 'The result is broken' unless r.exit.zero?
+  raise Baza::Urror, 'The result is broken' if r.exit.nonzero?
   Tempfile.open do |f|
     settings.fbs.load(r.uri2, f.path)
     content_type('application/octet-stream')
@@ -171,7 +173,7 @@ end
 
 get(%r{/inspect/([0-9]+).fb}) do
   the_human.locks.lock(params[:owner]) unless params[:owner].nil?
-  j = the_human.jobs.get(params['captures'].first.to_i)
+  j = the_human.jobs.get(Integer(params['captures'].first, 10))
   raise Baza::Urror, "The job ##{j.id} is expired" if j.expired?
   Tempfile.open do |f|
     settings.fbs.load(j.uri1, f.path)

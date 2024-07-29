@@ -41,19 +41,19 @@ class Baza::Tokens
   end
 
   def add(name)
-    raise 'Name is nil' if name.nil?
-    raise Baza::Urror, 'Name is too long (>32)' if name.length > 32
-    raise Baza::Urror, 'Name can\'t be empty' if name.empty?
-    raise Baza::Urror, 'The name is not valid' unless name.match?(/^[a-z][a-zA-Z0-9_-]*$/)
+    raise('Name is nil') if name.nil?
+    raise(Baza::Urror, 'Name is too long (>32)') if name.length > 32
+    raise(Baza::Urror, 'Name can\'t be empty') if name.empty?
+    raise(Baza::Urror, 'The name is not valid') unless name.match?(/^[a-z][a-zA-Z0-9_-]*$/)
     total = actives
-    raise Baza::Urror, "Too many active tokens already (#{total})" if total >= 8
-    raise Baza::Urror, 'Token with this name already exists' if exists?(name)
+    raise(Baza::Urror, "Too many active tokens already (#{total})") if total >= 8
+    raise(Baza::Urror, 'Token with this name already exists') if exists?(name)
     uuid = SecureRandom.uuid
     rows = pgsql.exec(
       'INSERT INTO token (human, name, text) VALUES ($1, $2, $3) RETURNING id',
       [@human.id, name, uuid]
     )
-    get(rows[0]['id'].to_i)
+    get(Integer(rows[0]['id'], 10))
   end
 
   def empty?
@@ -61,11 +61,11 @@ class Baza::Tokens
   end
 
   def size
-    pgsql.exec('SELECT COUNT(id) AS c FROM token WHERE human = $1', [@human.id])[0]['c'].to_i
+    Integer(pgsql.exec('SELECT COUNT(id) AS c FROM token WHERE human = $1', [@human.id])[0]['c'], 10)
   end
 
   def actives
-    pgsql.exec('SELECT COUNT(id) AS c FROM token WHERE human = $1 AND active', [@human.id])[0]['c'].to_i
+    Integer(pgsql.exec('SELECT COUNT(id) AS c FROM token WHERE human = $1 AND active', [@human.id])[0]['c'], 10)
   end
 
   def each(offset: 0)
@@ -75,17 +75,17 @@ class Baza::Tokens
       'WHERE human=$1 ' \
       'GROUP BY token.id ' \
       'ORDER BY active DESC, created DESC ' \
-      "OFFSET #{offset.to_i}"
+      "OFFSET #{Integer(offset, 10)}"
     pgsql.exec(q, [@human.id]).each do |row|
-      yield Veil.new(
-        get(row['id'].to_i),
-        id: row['id'].to_i,
+      yield(Veil.new(
+        get(Integer(row['id'], 10)),
+        id: Integer(row['id'], 10),
         active?: row['active'] == 't',
         name: row['name'],
         created: Time.parse(row['created']),
         text: row['text'],
         jobs_count: row['jobs_count']
-      )
+      ))
     end
   end
 
@@ -103,13 +103,13 @@ class Baza::Tokens
 
   def find(text)
     rows = pgsql.exec('SELECT id FROM token WHERE text = $1', [text])
-    raise Baza::Urror, 'Token not found' if rows.empty?
-    get(rows[0]['id'].to_i)
+    raise(Baza::Urror, 'Token not found') if rows.empty?
+    get(Integer(rows[0]['id'], 10))
   end
 
   def get(id)
-    raise 'Token ID must be an integer' unless id.is_a?(Integer)
-    require_relative 'token'
+    raise('Token ID must be an integer') unless id.is_a?(Integer)
+    require_relative('token')
     Baza::Token.new(self, id)
   end
 end

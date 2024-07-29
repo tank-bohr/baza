@@ -23,12 +23,7 @@
 # SOFTWARE.
 
 get '/locks' do
-  assemble(
-    :locks,
-    :default,
-    title: '/locks',
-    locks: the_human.locks
-  )
+  assemble(:locks, :default, title: '/locks', locks: the_human.locks)
 end
 
 # Lock the name of the job.
@@ -53,7 +48,7 @@ end
 
 # Delete the lock.
 get(%r{/lock/([0-9]+)/delete}) do
-  id = params['captures'].first.to_i
+  id = Integer(params['captures'].first, 10)
   the_human.locks.delete(id)
   flash(iri.cut('/locks'), "The lock ##{id} was removed")
 end
